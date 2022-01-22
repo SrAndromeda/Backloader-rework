@@ -24,43 +24,21 @@ showLicenceNotice = True
 
 
 from time import sleep
-import googleapiclient.discovery
-from urllib.parse import parse_qs, urlparse
-from pytube import YouTube
+
+from pytube import YouTube, Playlist
+
 import ssl
 
 ssl._create_default_https_context = ssl._create_stdlib_context
-
-# Go to Google Developer Console, search and enable Youtube Data API v3, then create a credential for Public Data and paste the API key to developerKey = "YOUR_API_KEY_HERE"
-
-youtube = googleapiclient.discovery.build("youtube", "v3", developerKey = "YOUR_API_KEY_HERE")
 
 
 #   GETTING URL OF VIDEOS FROM A PLAYLIST
 
 def getUrls(playlistUrl):
-    url = playlistUrl
-    query = parse_qs(urlparse(url).query, keep_blank_values=True)
-    playlist_id = query["list"][0]
 
-    request = youtube.playlistItems().list(
-        part = "snippet",
-        playlistId = playlist_id,
-        maxResults = 999
-    )
-    response = request.execute()
-
-    playlist_items = []
-    while request is not None:
-        response = request.execute()
-        playlist_items += response["items"]
-        request = youtube.playlistItems().list_next(request, response)
-
-
-    urls = [ 
-        f'https://www.youtube.com/watch?v={t["snippet"]["resourceId"]["videoId"]}&list={playlist_id}&t=0s'
-        for t in playlist_items
-    ]
+    playlist = Playlist(playlistUrl)
+    
+    urls = playlist.video_urls
     
     return(urls)
 
@@ -95,7 +73,6 @@ except:
 
 # Used to add urls of newly downloaded videos to a log file
 def appendFile(newUrls):
-    newUrls.sort()
     with open("downloadedUrls" + '.txt', 'a') as file:
         for url in newUrls:
             file.write(url + " ") # Im sick and tired of trying to write each url on a new line I cant make it read properly
@@ -146,6 +123,8 @@ if showLicenceNotice == True:
     This program comes with ABSOLUTELY NO WARRANTY; for details read LICENCE.txt .
     This is free software, and you are welcome to redistribute it
     under certain conditions; Read LICENCE.txt for details.
+    
+    Thank you to the contributors of pytube
     """)
 
 playlistUrl = input("Enter playlist URL:")
