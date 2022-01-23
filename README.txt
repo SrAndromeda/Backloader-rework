@@ -16,10 +16,12 @@ Initial setup
         Example for good operating systems:
         pathToTargetFolder = "/home/pixselious/Downloads/YouTube/RicingArtixSeason5"
 
-    3. Follow command line prompts. Prepare a link to your YouTube playlist. Use YouTube's share button to avoid any confusion. 
+    3. Follow command line prompts. Prepare a link to your YouTube playlist. Use YouTube's share button to avoid any confusion. Make sure it is public or available by link.
         Example:
         https://youtube.com/playlist?list=PLlaN88a7y2_plecYoJxvRFTLHVbIVAOoc
 
+Because of the way YouTube works, downloading videos in 720p is much faster than higher resolutions and does not require intense post-processing on your computer. 
+Consider limiting the script to 720p if you are running it on your main machine.
 
 
 Random notes:
