@@ -70,18 +70,38 @@ def download(url):
     except Exception as e:
         print(e)
     
-def downloadHiRes(url):
+def downloadHiRes(url, resolution):
+    
+    resolution = resolution + "p"
     
     print('Started ' + url)
     
     try:
         youtube = YouTube(url)
     
-        # Downloading highest resolution video and audio
+        # Getting all available resolutions
     
         video = youtube.streams.filter(only_video = True, file_extension = "mp4")
-        video.desc()
+        print(video)
+        
+        # Checking if user requested a specific resolution
+        if resolution != "MAXp":
+            # Checking if the requested resolution is available
+            temp = video.filter(res = resolution)
+            print(temp)
+            
+            if len(temp) == 0: 
+                # If the video is not available in the requested resolution, get the highest possible.
+                print("Requested resolution is not available")
+                video.desc()
+                print(video.first())
+            else:
+                video = temp
+        
+        
         video.first().download(filename = "temp_video_" + url.split("v=")[-1] + ".mp4")
+        
+        # Downloading the audio
         
         audio = youtube.streams
         audio.get_audio_only().download(filename = "temp_audio_" + url.split("v=")[-1] + ".mp4")
@@ -165,10 +185,10 @@ def checkPlaylist(playlistUrl):
 
 def downloadVideos(urls, resolution):
     for url in urls:
-        if resolution == True:
-            downloadHiRes(url)
-        else:
+        if resolution == "720":
             download(url)
+        else:
+            downloadHiRes(url, resolution)
         
         
         
@@ -186,18 +206,26 @@ if showLicenceNotice == True:
 
 playlistUrl = input("Enter playlist URL: ")
 ignoreCurrent = input("Do you want to download videos thet are already in this playlist? (Y/N): ")
-print("Downloading videos in the highest quality requires post-processing on your computer. This might cause your computer to heat up and be noisy.")
-print("Downloading videos in 720p does not require post-processing and will be much faster.")
-resolution = input("Do you want to download videos in the highest quality? (Y/N): ")
+print("")
+print("Downloading videos in the highest quality requires intense post-processing on your computer. This might cause your computer to heat up and be noisy.")
+print("Downloading videos in 720p does not require post-processing and will be much faster. Consider limiting the script to 720p if you are running it on your main machine.")
+
+i = False
+while i == False:
+    resolution = input("Set a resolution limit for the downloaded videos. (Enter one of the following numbers: 720, 1080, 1440, 2160, 4320 or enter 'MAX' if you do not wish to set a limit): ")
+    print("")
+    if resolution == "720" or resolution == "1080" or resolution == "1440" or resolution == "2160" or resolution == "4320" or resolution == "MAX": # Yes, I know, looks horrible, but it works and I don't want to spend half an hour to figure out how to make it more efficient. I will make a gui anyway.
+        i = True
+    else:
+        print("Invalid resolution. You entered: " + resolution)
+        print("Please enter one of the following numbers without commas, 'p', or any extra characters: 720, 1080, 1440, 2160, 4320. You can also enter the word 'MAX' without quotation marks and in all caps to get the best available resolution.")
+        
+
 interval = int(input("Enter time interval between checks in seconds (1 hour = 3600 seconds, 1 day = 86400 seconds): "))
 count = int(input("Enter total amount of checks you want to run: "))
 
 print("")
 
-if resolution == ("y" or "Y"):
-    hiRes = True
-else:
-    hiRes = False
 
 if ignoreCurrent == ("n" or "N"):
     currentVideos = checkPlaylist(playlistUrl)
@@ -209,7 +237,7 @@ for i in range(count):
     if len(newVideos) == 0:
         print("No new videos")
     else:
-        downloadVideos(newVideos, hiRes)
+        downloadVideos(newVideos, resolution)
         appendFile(newVideos)
     
     print("Waiting " + str(interval) + " seconds")
