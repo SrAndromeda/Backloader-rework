@@ -1,3 +1,7 @@
+Important notice: as of version 11.0.2 , pytube has a critical bug. 
+Here is how to fix it: https://github.com/pytube/pytube/pull/1203/files
+(All you need to do is type three characters into pytube/cipher.py)
+
 Initial setup
  
     1. Instal dependencies. Run the following commands in your terminal: 
