@@ -31,4 +31,4 @@ All you need to do when creating a library is <span dir="">turn off all the defa
 
 * YouTube team sometimes change something on their end and break the library used here for downloading videos. Monitor [this](https://github.com/pytube/pytube) GitHub page for changes in the cypher.py file.
 * The library used here for merging video and audio does not support HDR videos.
-* Since I wrote this, there are bugs.
+* Since I am the one who wrote this, there are bugs.
