@@ -58,13 +58,10 @@ def getUrls(playlistUrl):
     return(urls)
 
 def removeBadChars(string):
-    print(string)
     blacklist = ["|", "/", "\\"] # This script is designed to run on UNIX based OS's. If you are using Windows, consider switching to Linux. Or run this script in a Linux container.
     
     for i in blacklist:
-        print(i)
         string = string.replace(i, "")
-    print(string)
     return string
 
 #   DOWNLOADING VIDEOS
