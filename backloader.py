@@ -25,7 +25,7 @@ pathToBaseFolder = "" # Path to the folder where the videos will be saved. If yo
 # This script will create large temporary files and a log file in the same folder that it is in.
 # Make sure the user runnig this script has rights to read and write in this folder.
 
-interval = 3 # Time interval between checks in seconds (1 hour = 3600 seconds, 1 day = 86400 seconds) Default: 43200 (12 hours)
+interval = 43200 # Time interval between checks in seconds (1 hour = 3600 seconds, 1 day = 86400 seconds) Default: 43200 (12 hours)
 count = 3 # Total amount of checks you want to run. Default: 3
 unlimited = False # If True, ignores count, so the script will run forever. Set count to 3 ar any other number > 1 to be safe. Default: False
 
