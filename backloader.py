@@ -21,9 +21,19 @@
 
 showLicenceNotice = True
 
+pathToBaseFolder = "" # Path to the folder where the videos will be saved. If you're using this for Jellyfin, this should be the path to the library folder in your media folder (Example: "/jellyfin/media/youtube"). Set the library type to movies and turn off all default metadata providers and image fetchers.  
+# This script will create large temporary files and a log file in the same folder that it is in.
+# Make sure the user runnig this script has rights to read and write in this folder.
 
-from fileinput import filename
-from multiprocessing import connection
+interval = 3 # Time interval between checks in seconds (1 hour = 3600 seconds, 1 day = 86400 seconds) Default: 43200 (12 hours)
+count = 3 # Total amount of checks you want to run. Default: 3
+unlimited = False # If True, ignores count, so the script will run forever. Set count to 3 ar any other number > 1 to be safe. Default: False
+
+resolution = "720" # 720, 1080, 1440, 2160, 4320 or MAX. 720 requires no post-processing, higher resolutions require merging video and audio on your computer. Default: "720"
+playlistUrl = "" # Link to the playlist you want to monitor. Make sure that it is set to public or accessible by link. Use YouTube's share button to avoid any problems.
+ignoreCurrent = "y" # y : download the videos that are already in the playlist; n : ignore the current videos and only download the ones that are added later. Default: "y"
+
+
 from time import sleep
 
 from pytube import YouTube, Playlist
@@ -33,63 +43,8 @@ import os
 import shutil
 import ssl
 import urllib.request
-import sqlite3
 
 ssl._create_default_https_context = ssl._create_stdlib_context
-
-
-
-#   SETTING UP SQL
-
-sqliteConnection = sqlite3.connect("backloader.db")
-cursor = sqliteConnection.cursor()
-
-cursor.execute("""CREATE TABLE IF NOT EXISTS videos(
-    id TEXT PRIMARY KEY,
-    url TEXT,
-    name TEXT,
-    thumbnail TEXT,
-    description TEXT,
-    tags TEXT,
-    file TEXT,
-    quality INT,
-    playlist TEXT,
-    channel TEXT);
-""")
-
-cursor.execute("""CREATE TABLE IF NOT EXISTS playlists(
-    id TEXT PRIMARY KEY,
-    url TEXT,
-    name TEXT,
-    quality INT,
-    settings TEXT);
-""")
-
-cursor.execute("""CREATE TABLE IF NOT EXISTS channels(
-    id TEXT PRIMARY KEY,
-    url TEXT,
-    name TEXT,
-    profile TEXT);
-""")
-
-sqliteConnection.commit()
-
-
-
-#   DEFINING CLASSES FOR PASSING DATA INSIDE THIS SCRIPT AND TO UI
-class Video:
-    def __init__(self, id, url, name, thumbnail, description, tags, file, quality, playlist, channel):
-        self.id = id
-        self.url = url
-        self.name = name
-        self.thumbnail = thumbnail
-        self.description = description
-        self.tags = tags
-        self.file = file
-        self.quality = quality
-        self.playlist = playlist
-        self.channel = channel
-
 
 
 #   GETTING URL OF VIDEOS FROM A PLAYLIST
@@ -102,13 +57,15 @@ def getUrls(playlistUrl):
     
     return(urls)
 
-
-def URLtoID(url):
-    # Converts URLs from pytube to IDs for the database. This only works for regular short links, like the ones we get from pytube.
-    id = url.split("=")[1]
-    return id
-
-
+def removeBadChars(string):
+    print(string)
+    blacklist = ["|", "/", "\\"] # This script is designed to run on UNIX based OS's. If you are using Windows, consider switching to Linux. Or run this script in a Linux container.
+    
+    for i in blacklist:
+        print(i)
+        string = string.replace(i, "")
+    print(string)
+    return string
 
 #   DOWNLOADING VIDEOS
 
@@ -117,23 +74,21 @@ def download(url):
     print('Started ' + url)
     
     try:
-        youtube = YouTube(url)
+        yt_obj = YouTube(url)
     
-        filters = youtube.streams.filter(progressive=True, file_extension = "mp4")
+        filters = yt_obj.streams.filter(progressive=True, file_extension = "mp4")
         
-        filters.get_highest_resolution().download(filename = URLtoID(url) + ".mp4", output_path = os.path.normcase("./videos"))
+        if len(pathToBaseFolder) == 0:
+            filters.get_highest_resolution().download(filename = removeBadChars(yt_obj.title) + ".mp4")
+        else:
+            pathToTargetFolder = pathToBaseFolder + "/" + removeBadChars(yt_obj.title)
+            os.mkdir(pathToTargetFolder)
+            filters.get_highest_resolution().download(output_path = pathToTargetFolder, filename = removeBadChars(yt_obj.title) + ".mp4")
+            urllib.request.urlretrieve(yt_obj.thumbnail_url, pathToTargetFolder + "/poster.jpg")
+            
         
         print('Downloaded')
-        
-        # Download the thumbnail
-        
-        urllib.request.urlretrieve(youtube.thumbnail_url, os.path.normcase("./thumbnails/") + URLtoID(url) + ".jpg")
-        
-        # Prepare data for the database
-        
-        video = Video(URLtoID(url), url, youtube.title, os.path.abspath(os.path.normcase("./thumbnails/") + URLtoID(url) + ".jpg"), youtube.description, youtube.keywords, os.path.abspath(os.path.normcase("./videos/") + URLtoID(url) + ".mp4"), resolution, "Default", youtube.channel_id)
-        
-        return(video)
+        print("")
         
     except Exception as e:
         print(e)
@@ -150,16 +105,19 @@ def downloadHiRes(url, resolution):
         # Getting all available resolutions
     
         video = youtube.streams.filter(only_video = True, file_extension = "mp4")
+        print(video)
         
         # Checking if user requested a specific resolution
         if resolution != "MAXp":
             # Checking if the requested resolution is available
             temp = video.filter(res = resolution)
+            print(temp)
             
             if len(temp) == 0: 
                 # If the video is not available in the requested resolution, get the highest possible.
                 print("Requested resolution is not available")
                 video.desc()
+                print(video.first())
             else:
                 video = temp
         
@@ -179,28 +137,27 @@ def downloadHiRes(url, resolution):
         audioClip = AudioFileClip("temp_audio_" + url.split("v=")[-1] + ".mp4")
         
         completeClip = videoClip.set_audio(audioClip)
-        completeClip.write_videofile(filename = URLtoID(url) + ".mp4", audio_codec = "aac")
+        completeClip.write_videofile(filename = "final_" + url.split("v=")[-1] + ".mp4", audio_codec = "aac")
         
         # Removing temporary video and audio files
         
         os.remove("temp_video_" + url.split("v=")[-1] + ".mp4")
         os.remove("temp_audio_" + url.split("v=")[-1] + ".mp4")
         
-        shutil.move(URLtoID(url) + ".mp4", os.path.normcase("./videos"))
+        # Renaming final file here instead of during creation to not confuse the terminal with emojis or anything like that.
         
-    
+        newName = removeBadChars(youtube.title) + ".mp4"
+        os.rename("final_" + url.split("v=")[-1] + ".mp4", newName)
+        
+        pathToTargetFolder = pathToBaseFolder + "/" + removeBadChars(youtube.title)
+        
+        if len(pathToBaseFolder) != 0:
+            shutil.move(newName, pathToTargetFolder)
+            urllib.request.urlretrieve(youtube.thumbnail_url, pathToTargetFolder + "/poster.jpg")
+            
+        
         print('Merged')
         print("")
-        
-        # Download the thumbnail
-        
-        urllib.request.urlretrieve(youtube.thumbnail_url, os.path.normcase("./thumbnails/") + URLtoID(url) + ".jpg")
-        
-        # Prepare data for the database
-        
-        video = Video(URLtoID(url), url, youtube.title, os.path.abspath(os.path.normcase("./thumbnails/") + URLtoID(url) + ".jpg"), youtube.description, youtube.keywords, os.path.abspath(os.path.normcase("./videos/") + URLtoID(url) + ".mp4"), resolution, "Default", youtube.channel_id)
-    
-        return(video)
         
     except Exception as e:
         print(e)
@@ -208,68 +165,25 @@ def downloadHiRes(url, resolution):
     
 #   LOGGING DOWNLOADED VIDEOS
 
-# Creates folders on the first run 
-
+# Creates a log file on the first run 
 try:
-    os.mkdir("videos")
-except:
-    pass
-
-try:
-    os.mkdir("thumbnails")
-except:
-    pass
-
-try:
-    os.mkdir("channels")
+    file = open(pathToBaseFolder + "/downloadedUrls" + '.txt', 'x')
+    file.close
 except:
     pass
 
 # Used to add urls of newly downloaded videos to a log file
-def updateVideos(videos):
-    for video in videos:
-        
-        cursor.execute(f"""INSERT INTO videos(
-            id,
-            url,
-            name,
-            thumbnail,
-            description,
-            tags,
-            file,
-            quality,
-            playlist,
-            channel)
-            
-            VALUES(
-            "{video.id}",
-            "{video.url}",
-            "{video.name}",
-            "{video.thumbnail}",
-            "{video.description}",
-            "{video.tags}",
-            "{video.file}",
-            "{video.quality}",
-            "{video.playlist}",
-            "{video.channel}")
-        ;""")
-        
-    sqliteConnection.commit()
+def appendFile(newUrls):
+    with open(pathToBaseFolder + "/downloadedUrls" + '.txt', 'a') as file:
+        for url in newUrls:
+            file.write(url + " ")
 
 # Used to fetch urls of previously downloaded videos to compare with urls from YT playlist
-def readVideos(playlistUrl):
+def readFile():
     urls = []
-    
-    cursor.execute(f""" SELECT url 
-        FROM videos 
-        WHERE playlist = '{URLtoID(playlistUrl)}'
-    ;""")
-    
-    data = cursor.fetchall()
-    
-    for url in data:
-        urls.append(url[0])
-    
+    with open(pathToBaseFolder + "/downloadedUrls" + '.txt', 'r') as file:
+        raw = file.read()
+    urls = raw.split()
     return(urls)
 
 # Shows new videos in the playlist
@@ -290,24 +204,18 @@ def compare(local, online):
 #   CHECKING FOR NEW VIDEOS AND DOWNLOADING THEM
 
 def checkPlaylist(playlistUrl):
-    local = readVideos(playlistUrl)
+    local = readFile()
     online = getUrls(playlistUrl)
     newVideos = compare(local, online)
     
     return(newVideos)
 
-def downloadVideos(urls, resolution, playlistUrl):
-    report = []
+def downloadVideos(urls, resolution):
     for url in urls:
         if resolution == "720":
-            video = download(url)
+            download(url)
         else:
-            video = downloadHiRes(url, resolution)
-        
-        video.playlist = URLtoID(playlistUrl)
-        report.append(video)
-        
-    return(report)
+            downloadHiRes(url, resolution)
         
         
         
@@ -323,32 +231,12 @@ if showLicenceNotice == True:
     Thank you to the contributors of pytube and moviepy
     """)
 
-playlistUrl = input("Enter playlist URL: ")
-ignoreCurrent = input("Do you want to download videos thet are already in this playlist? (Y/N): ")
-print("")
-print("Downloading videos in the highest quality requires intense post-processing on your computer. This might cause your computer to heat up and be noisy.")
-print("Downloading videos in 720p does not require post-processing and will be much faster. Consider limiting the script to 720p if you are running it on your main machine.")
-
-i = False
-while i == False:
-    resolution = input("Set a resolution limit for the downloaded videos. (Enter one of the following numbers: 720, 1080, 1440, 2160, 4320 or enter 'MAX' if you do not wish to set a limit): ")
-    print("")
-    if resolution == "720" or resolution == "1080" or resolution == "1440" or resolution == "2160" or resolution == "4320" or resolution == "MAX": # Yes, I know, looks horrible, but it works and I don't want to spend half an hour to figure out how to make it more efficient. I will make a gui anyway.
-        i = True
-    else:
-        print("Invalid resolution. You entered: " + resolution)
-        print("Please enter one of the following numbers without commas, 'p', or any extra characters: 720, 1080, 1440, 2160, 4320. You can also enter the word 'MAX' without quotation marks and in all caps to get the best available resolution.")
-        
-
-interval = int(input("Enter time interval between checks in seconds (1 hour = 3600 seconds, 1 day = 86400 seconds): "))
-count = int(input("Enter total amount of checks you want to run: "))
-
 print("")
 
 
 if ignoreCurrent == ("n" or "N"):
     currentVideos = checkPlaylist(playlistUrl)
-    updateVideos(currentVideos)
+    appendFile(currentVideos)
 
 for i in range(count):
     newVideos = checkPlaylist(playlistUrl)
@@ -356,8 +244,8 @@ for i in range(count):
     if len(newVideos) == 0:
         print("No new videos")
     else:
-        report = downloadVideos(newVideos, resolution, playlistUrl)
-        updateVideos(report)
+        downloadVideos(newVideos, resolution)
+        appendFile(newVideos)
     
     print("Waiting " + str(interval) + " seconds")
     sleep(interval)
