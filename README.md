@@ -22,13 +22,12 @@ A macOS app is in early stages of development and might be cancelled in favour o
 
 ## For Jellyfin users
 
-<div>
 
 Backloader 1.2 and later were designed to work with Jellyfin. The script automatically organizes downloaded data for the Movies library type. Just create an empty folder for the new library in your media folder, like you normally would, and give the path to this folder to the script (<span dir="">`pathToBaseFolder = "/jellyfin/media/youtube"`</span>)
 
 All you need to do when creating a library is <span dir="">turn off all the default metadata providers and image fetchers.</span> When you manually trigger a library scan, never check the “replace all images” box.
 
-</div>## Limitations
+## Limitations
 
 * YouTube team sometimes change something on their end and break the library used here for downloading videos. Monitor [this](https://github.com/pytube/pytube) GitHub page for changes in the cypher.py file.
 * The library used here for merging video and audio does not support HDR videos.
