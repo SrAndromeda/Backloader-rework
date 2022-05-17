@@ -15,7 +15,7 @@ A macOS app is in early stages of development and might be cancelled in favour o
 
 1. **Download** the script. 
 2. Install or **update python**. Follow steps on [python.org](http://python.org).
-3. **Install dependencies** `python pip install pytube moviepy shutil ssl urllib`.
+3. **Install dependencies** `pip install pytube moviepy`.
 4. **Create a playlist** on YouTube and set it to be accessible by link or public. You will add the videos that you want to download once the script is running.
 5. Open the script in any editor and **configure the values** on the first few lines. You need to set a path to the **folder** where the videos will be saved (`pathToBaseFolder`) and set a link to the **playlist** that you want to monitor (`playlistUrl`). You might want to change the **resolution** in which the videos will be downloaded (`resolution = "720"`) and set the script to **run forever** (`unlimited = True`). Everything else will work fine with the default values (by default, the playlist is checked for new videos every 12 hours). 
 6. **Run** the script `python path/to/backloader.py`.
