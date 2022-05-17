@@ -71,11 +71,11 @@ def downloadProgressive(url, pathToTargetFolder):
     
         filters = youtube.streams.filter(progressive=True, file_extension = "mp4")
         
-        filters.get_highest_resolution().download(output_path = pathToTargetFolder, filename = removeBadChars(youtube.title) + ".mp4")
+        filters.get_highest_resolution().download(output_path = pathToTargetFolder + "/" + removeBadChars(youtube.title), filename = removeBadChars(youtube.title) + ".mp4")
         
         # Download the thumbnail
         
-        urllib.request.urlretrieve(youtube.thumbnail_url, pathToTargetFolder + "/poster.jpg")
+        urllib.request.urlretrieve(youtube.thumbnail_url, pathToTargetFolder + "/" + removeBadChars(youtube.title) + "/poster.jpg")
         
         print('Downloaded')
         
@@ -140,9 +140,10 @@ def downloadHiRes(url, resolution, pathToTargetFolder):
         newName = removeBadChars(youtube.title) + ".mp4"
         os.rename("final_" + url.split("v=")[-1] + ".mp4", newName)
         
-        if len(pathToBaseFolder) != 0:
-            shutil.move(newName, pathToTargetFolder)
-            urllib.request.urlretrieve(youtube.thumbnail_url, pathToTargetFolder + "/poster.jpg")
+        pathToTargetFolder = pathToTargetFolder + "/" + removeBadChars(youtube.title)
+        
+        shutil.move(newName, pathToTargetFolder)
+        urllib.request.urlretrieve(youtube.thumbnail_url, pathToTargetFolder + "/poster.jpg")
             
         
         print('Merged')
