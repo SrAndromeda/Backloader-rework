@@ -1,6 +1,6 @@
 """
     
-    YouTube Backloader will download new videos from a selected YouTube playlist.
+    Backloader will download new videos from a selected YouTube playlist.
     Copyright (C) 2022  Pixselious
 
     This program is free software: you can redistribute it and/or modify
@@ -21,24 +21,14 @@
 
 showLicenceNotice = True
 
-pathToBaseFolder = "" # Path to the folder where the videos will be saved. If you're using this for Jellyfin, this should be the path to the library folder in your media folder (Example: "/jellyfin/media/youtube"). Set the library type to movies and turn off all default metadata providers and image fetchers.  
-# This script will create large temporary files and a log file in the same folder that it is in.
-# Make sure the user runnig this script has rights to read and write in this folder.
-
-interval = 43200 # Time interval between checks in seconds (1 hour = 3600 seconds, 1 day = 86400 seconds) Default: 43200 (12 hours)
-count = 3 # Total amount of checks you want to run. Default: 3
-unlimited = False # If True, ignores count, so the script will run forever. Set count to 3 ar any other number > 1 to be safe. Default: False
-
-resolution = "720" # 720, 1080, 1440, 2160, 4320 or MAX. 720 requires no post-processing, higher resolutions require merging video and audio on your computer. Default: "720"
-playlistUrl = "" # Link to the playlist you want to monitor. Make sure that it is set to public or accessible by link. Use YouTube's share button to avoid any problems.
-ignoreCurrent = "y" # y : download the videos that are already in the playlist; n : ignore the current videos and only download the ones that are added later. Default: "y"
-
+pathToBaseFolder = "" 
 
 from time import sleep
 
 from pytube import YouTube, Playlist
 from moviepy.editor import *
 
+import multiprocessing as mp
 import os
 import shutil
 import ssl
@@ -50,12 +40,18 @@ ssl._create_default_https_context = ssl._create_stdlib_context
 #   GETTING URL OF VIDEOS FROM A PLAYLIST
 
 def getUrls(playlistUrl):
-
+    # Getting URLs of videos from a playliat. Returns a list of strings
     playlist = Playlist(playlistUrl)
     
     urls = list(playlist.video_urls)
     
     return(urls)
+
+def URLtoID(url):
+    # Converts URLs from pytube to IDs for the database. This only works for regular short links, like the ones we get from pytube. Returns a string.
+    id = url.split("=")[1]
+    return id
+
 
 def removeBadChars(string):
     blacklist = ["|", "/", "\\"] # This script is designed to run on UNIX based OS's. If you are using Windows, consider switching to Linux. Or run this script in a Linux container.
@@ -66,32 +62,28 @@ def removeBadChars(string):
 
 #   DOWNLOADING VIDEOS
 
-def download(url):
-    
+def downloadProgressive(url, pathToTargetFolder):
+    # Download video in the highest progressive (image + sound) resolution. Returns a Video() object. 
     print('Started ' + url)
     
     try:
-        yt_obj = YouTube(url)
+        youtube = YouTube(url)
     
-        filters = yt_obj.streams.filter(progressive=True, file_extension = "mp4")
+        filters = youtube.streams.filter(progressive=True, file_extension = "mp4")
         
-        if len(pathToBaseFolder) == 0:
-            filters.get_highest_resolution().download(filename = removeBadChars(yt_obj.title) + ".mp4")
-        else:
-            pathToTargetFolder = pathToBaseFolder + "/" + removeBadChars(yt_obj.title)
-            os.mkdir(pathToTargetFolder)
-            filters.get_highest_resolution().download(output_path = pathToTargetFolder, filename = removeBadChars(yt_obj.title) + ".mp4")
-            urllib.request.urlretrieve(yt_obj.thumbnail_url, pathToTargetFolder + "/poster.jpg")
-            
+        filters.get_highest_resolution().download(output_path = pathToTargetFolder, filename = removeBadChars(youtube.title) + ".mp4")
+        
+        # Download the thumbnail
+        
+        urllib.request.urlretrieve(youtube.thumbnail_url, pathToTargetFolder + "/poster.jpg")
         
         print('Downloaded')
-        print("")
         
     except Exception as e:
         print(e)
-    
-def downloadHiRes(url, resolution):
-    
+        
+def downloadHiRes(url, resolution, pathToTargetFolder):
+    # Download video and audio separately and them merge them. Returns a Video() object.
     resolution = resolution + "p"
     
     print('Started ' + url)
@@ -102,51 +94,51 @@ def downloadHiRes(url, resolution):
         # Getting all available resolutions
     
         video = youtube.streams.filter(only_video = True, file_extension = "mp4")
-        print(video)
         
         # Checking if user requested a specific resolution
         if resolution != "MAXp":
             # Checking if the requested resolution is available
             temp = video.filter(res = resolution)
-            print(temp)
             
-            if len(temp) == 0: 
+            if len(temp) == 0:
                 # If the video is not available in the requested resolution, get the highest possible.
                 print("Requested resolution is not available")
                 video.desc()
-                print(video.first())
             else:
                 video = temp
         
         
-        video.first().download(filename = "temp_video_" + url.split("v=")[-1] + ".mp4")
+        video.first().download(filename = "temp_video_" + URLtoID(url) + ".mp4")
         
         # Downloading the audio
         
         audio = youtube.streams
-        audio.get_audio_only().download(filename = "temp_audio_" + url.split("v=")[-1] + ".mp4")
+        audio.get_audio_only().download(filename = "temp_audio_" + URLtoID(url) + ".mp4")
         
         # Merging video and audio together
         
         print('Merging video and audio, this might take a while')
         
-        videoClip = VideoFileClip("temp_video_" + url.split("v=")[-1] + ".mp4")
-        audioClip = AudioFileClip("temp_audio_" + url.split("v=")[-1] + ".mp4")
+        videoClip = VideoFileClip(os.path.normcase("temp_video_" + URLtoID(url) + ".mp4"))
+        audioClip = AudioFileClip(os.path.normcase("temp_audio_" + URLtoID(url) + ".mp4"))
         
         completeClip = videoClip.set_audio(audioClip)
         completeClip.write_videofile(filename = "final_" + url.split("v=")[-1] + ".mp4", audio_codec = "aac")
         
         # Removing temporary video and audio files
         
-        os.remove("temp_video_" + url.split("v=")[-1] + ".mp4")
-        os.remove("temp_audio_" + url.split("v=")[-1] + ".mp4")
+        os.remove(os.path.normcase("temp_video_" + URLtoID(url) + ".mp4"))
+        os.remove(os.path.normcase("temp_audio_" + URLtoID(url) + ".mp4"))
         
+        shutil.move(URLtoID(url) + ".mp4", os.path.normcase("./videos"))
+        
+    
         # Renaming final file here instead of during creation to not confuse the terminal with emojis or anything like that.
+        
+        #TODO: give savers a complete path instead of them coming up with a new one on their own
         
         newName = removeBadChars(youtube.title) + ".mp4"
         os.rename("final_" + url.split("v=")[-1] + ".mp4", newName)
-        
-        pathToTargetFolder = pathToBaseFolder + "/" + removeBadChars(youtube.title)
         
         if len(pathToBaseFolder) != 0:
             shutil.move(newName, pathToTargetFolder)
@@ -158,17 +150,19 @@ def downloadHiRes(url, resolution):
         
     except Exception as e:
         print(e)
-    
+
+
     
 #   LOGGING DOWNLOADED VIDEOS
 
 # Creates a log file on the first run 
+#TODO: put this in a for loop under if __name__ == '__main__':
 try:
     file = open(pathToBaseFolder + "/downloadedUrls" + '.txt', 'x')
     file.close
 except:
     pass
-
+#TODO: make separate files for different playlists
 # Used to add urls of newly downloaded videos to a log file
 def appendFile(newUrls):
     with open(pathToBaseFolder + "/downloadedUrls" + '.txt', 'a') as file:
@@ -194,8 +188,54 @@ def compare(local, online):
     
     difference = online 
     return difference    
+
+
+#   SAVING FLOW SETTINGS AND OTHER FLOW HELPER FUNCTIONS
+
+#TODO add a list of dict that fetches and stores itself in a json file and has a setter fuction for flows to selfreport (sus) their settings
+
+jellyfin = True
+
+flowData = [] # Stores flow settings. Saved to a json file.
+flowProcesses = []
+
+"""
+"id" : 0,
+"name" : "0 playlist title",
+"workingDirectory" : "/media",
+"interval" : 43200,
+"limit" : 0,
+"resolution" : "720",
+"playlistUrl" : ""
+"""
+
+
+def getPlaylistName(url):
+    # Gets the name of a playlist
+    playlist = Playlist(url = url)
+    name = playlist.title
+    return(name)
+
+# Creates a dictionary and adds it to the list
+def createFlow(workingDirectory, interval, limit, resolution, playlistUrl):
     
-    
+        id = len(flowData)
+        name = str(id) + " " + removeBadChars(getPlaylistName(playlistUrl))
+        if jellyfin:
+            workingDirectory = workingDirectory + "/" + name
+            
+        newFlow = {"id" : id,
+            "name" : name,
+            "workingDirectory" : workingDirectory,
+            "interval" : interval,
+            "limit" : limit,
+            "resolution" : resolution,
+            "playlistUrl" : playlistUrl
+        }
+        
+        flowData.append(newFlow)
+        print("Added new flow " + str(newFlow))
+ 
     
 
 #   CHECKING FOR NEW VIDEOS AND DOWNLOADING THEM
@@ -207,20 +247,19 @@ def checkPlaylist(playlistUrl):
     
     return(newVideos)
 
-def downloadVideos(urls, resolution):
+def downloadVideos(urls, resolution, path):
     for url in urls:
         if resolution == "720":
-            download(url)
+            downloadProgressive(url, path)
         else:
-            downloadHiRes(url, resolution)
-        
+            downloadHiRes(url, resolution, path)
         
         
 #   UI
 
 if showLicenceNotice == True:
     print("""
-    YouTube Backloader  Copyright (C) 2022  Pixselious
+    Backloader  Copyright (C) 2022  Pixselious
     This program comes with ABSOLUTELY NO WARRANTY; for details read LICENCE.txt .
     This is free software, and you are welcome to redistribute it
     under certain conditions; Read LICENCE.txt for details.
@@ -231,22 +270,63 @@ if showLicenceNotice == True:
 print("")
 
 
-if ignoreCurrent == ("n" or "N"):
-    currentVideos = checkPlaylist(playlistUrl)
-    appendFile(currentVideos)
+def flowInstance (id, name, workingDirectory, interval, limit, resolution, playlistUrl):
 
-for i in range(count):
-    newVideos = checkPlaylist(playlistUrl)
+    print("Launched flow " + name)
     
-    if len(newVideos) == 0:
-        print("No new videos")
+    #currentVideos = checkPlaylist(playlistUrl)
+    #appendFile(currentVideos) 
+
+    if limit == 0:
+        
+        while True:
+            newVideos = checkPlaylist(playlistUrl)
+            
+            if len(newVideos) == 0:
+                print("No new videos")
+            else:
+                downloadVideos(newVideos, resolution, workingDirectory)
+                appendFile(newVideos)
+            
+            print("Waiting " + str(interval) + " seconds")
+            sleep(interval)
+            
     else:
-        downloadVideos(newVideos, resolution)
-        appendFile(newVideos)
+            
+        for i in range(limit):
+            newVideos = checkPlaylist(playlistUrl)
+            
+            if len(newVideos) == 0:
+                print("No new videos")
+            else:
+                downloadVideos(newVideos, resolution, workingDirectory)
+                appendFile(newVideos)
+            
+            print("Waiting " + str(interval) + " seconds")
+            sleep(interval)
     
-    print("Waiting " + str(interval) + " seconds")
-    sleep(interval)
+            
+            i += 1
+            
+        print("Reached limit of checks")
+        
     
-    i += 1
     
-print("Reached limit of checks")
+    
+    
+# MULTIPROCESSING
+
+
+if __name__ == '__main__':
+    
+    #TODO: Load flowData from memory
+    
+    # Debug
+    createFlow(workingDirectory= "", interval= 3, limit= 3, resolution= "720", playlistUrl= "")
+    
+    for flow in flowData:
+        flowProcesses.append(mp.Process(target = flowInstance, name = "Backloader " + flow["name"], args = (flow["id"], flow["name"], flow["workingDirectory"], flow["interval"], flow["limit"], flow["resolution"], flow["playlistUrl"])))
+    
+    for process in flowProcesses:
+        process.start()
+    
