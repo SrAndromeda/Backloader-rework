@@ -23,9 +23,9 @@ from __future__ import unicode_literals
 showLicenceNotice = False
 
 from time import sleep
-
 from yt_dlp import YoutubeDL
-
+import os
+from PIL import Image
 import multiprocessing as mp
 
 
@@ -54,8 +54,10 @@ def download(url, resolution, pathToTargetFolder, flowId):
     #Selecting resolution
     if str(resolution) == '720':
         format = 'best' # Selecting the best progressive (video and audio in one file) stream
-    elif str(resolution) == 'MAX':
+    elif str(resolution) == 'BEST':
         format = 'bestaudio+bestvideo/best' #Selecting best audio and merging it to best video. If NA, fall back to best progressive stream.
+    elif str(resolution) == 'WORST':
+        format = 'wv*+wa'       #Selecting worst video and merging it to worst audio. 
     elif str(resolution) == 'AUDIO':
         format = 'bestaudio' #Selecting the best audio only stream 
     else:
@@ -183,13 +185,35 @@ def flowInstance (id, name, workingDirectory, interval, limit, resolution, playl
     if limit == 0:   
         while True:
             print(name+" Checking playlist")
-            download(playlistUrl, resolution, workingDirectory, id)    
+            download(playlistUrl, resolution, workingDirectory, id) #Downloading videos, thumbnails and metadata
+            
+            thumbnails = [os.path.join(root, name) #Getting paths to all thumbnails
+                for root, dirs, files in os.walk(workingDirectory)
+                for name in files
+                if name.endswith(".webp")]
+            
+            for thumbnail in thumbnails: #Converting thumbnails into a supported format
+                tmp = Image.open(thumbnail).convert("RGB")
+                tmp.save(thumbnail.replace(".webp", ".jpg"), "jpeg")
+                os.remove(thumbnail) #Removing old thumbnails
+            
             print(name+" Waiting " + str(interval) + " seconds")
             sleep(interval)
     else:
         for i in range(limit):
             print(name+" Checking playlist")
-            download(playlistUrl, resolution, workingDirectory, id)
+            download(playlistUrl, resolution, workingDirectory, id)    
+            
+            thumbnails = [os.path.join(root, name)
+                for root, dirs, files in os.walk(workingDirectory)
+                for name in files
+                if name.endswith(".webp")]
+            
+            for thumbnail in thumbnails:
+                tmp = Image.open(thumbnail).convert("RGB")
+                tmp.save(thumbnail.replace(".webp", ".jpg"), "jpeg")
+                os.remove(thumbnail)
+            
             print(name+" Waiting " + str(interval) + " seconds")
             sleep(interval)
             
@@ -209,7 +233,7 @@ if __name__ == '__main__':
     
     #TODO: Load flowData from memory
     
-    createFlow(workingDirectory= "Path to your media folder here (a library folder will be created automatically)", interval= 3, limit= 3, resolution= "720", playlistUrl= "Link to your playlist here")
+    createFlow(workingDirectory= "Path to your media folder here (a library folder will be created automatically)", interval= 3, limit= 3, resolution= "720", playlistUrl= "Link to your playlist here") # Resolution supports any valid resolution number (must be a string) and these keywords: BEST WORST (AUDIO audio files are not shown in jellyfin, working on it). 
     
     for flow in flowData:
         flowProcesses.append(mp.Process(target = flowInstance, name = "Backloader " + flow["name"], args = (flow["id"], flow["name"], flow["workingDirectory"], flow["interval"], flow["limit"], flow["resolution"], flow["playlistUrl"])))
