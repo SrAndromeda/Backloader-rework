@@ -1,6 +1,6 @@
 """
     
-    YouTube Backloader will download new videos from a selected YouTube playlist.
+    Backloader will download new videos from a selected YouTube playlist.
     Copyright (C) 2022  Pixselious
 
     This program is free software: you can redistribute it and/or modify
@@ -19,43 +19,24 @@
 """
 
 
-showLicenceNotice = True
-
-pathToBaseFolder = "" # Path to the folder where the videos will be saved. If you're using this for Jellyfin, this should be the path to the library folder in your media folder (Example: "/jellyfin/media/youtube"). Set the library type to movies and turn off all default metadata providers and image fetchers.  
-# This script will create large temporary files and a log file in the same folder that it is in.
-# Make sure the user runnig this script has rights to read and write in this folder.
-
-interval = 43200 # Time interval between checks in seconds (1 hour = 3600 seconds, 1 day = 86400 seconds) Default: 43200 (12 hours)
-count = 3 # Total amount of checks you want to run. Default: 3
-unlimited = False # If True, ignores count, so the script will run forever. Set count to 3 ar any other number > 1 to be safe. Default: False
-
-resolution = "720" # 720, 1080, 1440, 2160, 4320 or MAX. 720 requires no post-processing, higher resolutions require merging video and audio on your computer. Default: "720"
-playlistUrl = "" # Link to the playlist you want to monitor. Make sure that it is set to public or accessible by link. Use YouTube's share button to avoid any problems.
-ignoreCurrent = "y" # y : download the videos that are already in the playlist; n : ignore the current videos and only download the ones that are added later. Default: "y"
-
+showLicenceNotice = False
 
 from time import sleep
-
-from pytube import YouTube, Playlist
-from moviepy.editor import *
-
+from yt_dlp import YoutubeDL
 import os
-import shutil
-import ssl
-import urllib.request
+from PIL import Image
+import multiprocessing as mp
 
-ssl._create_default_https_context = ssl._create_stdlib_context
 
 
 #   GETTING URL OF VIDEOS FROM A PLAYLIST
 
-def getUrls(playlistUrl):
 
-    playlist = Playlist(playlistUrl)
-    
-    urls = list(playlist.video_urls)
-    
-    return(urls)
+def URLtoID(url):
+    # Converts URLs from pytube to IDs for the database. This only works for regular short links, like the ones we get from pytube. Returns a string.
+    id = url.split("=")[1]
+    return id
+
 
 def removeBadChars(string):
     blacklist = ["|", "/", "\\"] # This script is designed to run on UNIX based OS's. If you are using Windows, consider switching to Linux. Or run this script in a Linux container.
@@ -66,187 +47,196 @@ def removeBadChars(string):
 
 #   DOWNLOADING VIDEOS
 
-def download(url):
+
+def download(url, resolution, pathToTargetFolder, flowId):
     
-    print('Started ' + url)
+    #Selecting resolution
+    if str(resolution) == '720':
+        format = 'best' # Selecting the best progressive (video and audio in one file) stream
+    elif str(resolution) == 'BEST':
+        format = 'bestaudio[ext=m4a]+bestvideo[ext=mp4]/best' #Selecting best audio and merging it to best video. If NA, fall back to best progressive stream.
+    elif str(resolution) == 'WORST':
+        format = 'wv*+wa'       #Selecting worst video and merging it to worst audio !!!very slow download speed!!!
+    elif str(resolution) == 'AUDIO':
+        format = 'bestaudio[ext=m4a]' #Selecting the best audio only stream 
+    else:
+        format = 'bestaudio[ext=m4a]+bestvideo[height={}][ext=mp4]/bestaudio[ext=m4a]+bestvideo[ext=mp4]/best'.format(str(resolution)) #Selecting best audio and merging it to video of requested resolution. If NA, fall back to best separate streams, if NA fall back to best progressive stream.
+
     
+    #Selecting appropriate output templates for each supported library type
+    #Guide for these unreadable blobs https://github.com/yt-dlp/yt-dlp#output-template
+    if str(resolution) == 'AUDIO':
+        outtmpl = {
+                'default': '%(channel)s /%(title)s.%(ext)s'
+        } # Music library type https://jellyfin.org/docs/general/server/media/music.html
+    else:
+        outtmpl = {
+                'default': '%(title)s [%(id)s]/%(title)s [%(id)s].%(ext)s',
+                'thumbnail': '%(title)s [%(id)s]/poster.%(ext)s',
+                'infojson': '%(title)s [%(id)s]/%(title)s [%(id)s].%(ext)s'
+            } # Movies library type https://jellyfin.org/docs/general/server/media/movies.html
+    
+
     try:
-        yt_obj = YouTube(url)
-    
-        filters = yt_obj.streams.filter(progressive=True, file_extension = "mp4")
         
-        if len(pathToBaseFolder) == 0:
-            filters.get_highest_resolution().download(filename = removeBadChars(yt_obj.title) + ".mp4")
-        else:
-            pathToTargetFolder = pathToBaseFolder + "/" + removeBadChars(yt_obj.title)
-            os.mkdir(pathToTargetFolder)
-            filters.get_highest_resolution().download(output_path = pathToTargetFolder, filename = removeBadChars(yt_obj.title) + ".mp4")
-            urllib.request.urlretrieve(yt_obj.thumbnail_url, pathToTargetFolder + "/poster.jpg")
-            
+        ydl_opts = {
+            'format': format,       #What to download
+            'writethumbnail': 'True',       #Download the thumbnail
+            'download_archive': 'downloaded_{}.txt'.format(flowId),         #Keep a record of  downloaded videos 
+            'writeinfojson': 'True',        #Download video metadata (description, author, etc)
+            'merge_output_format': 'mp4',       #Keep videos mp4
+            'paths': {
+                'home': pathToTargetFolder,
+                'temp': pathToTargetFolder + '/tmp'
+            },      #Where to save the videos
+            'outtmpl': outtmpl,         #Where to save the videos and how to name them
+            'progrss': 'True',       #Show progress bars   
+            'embed_metadata': 'True'        #Embed the thumbnail, subtitles, chapters and other metadata when possible 
+        }
         
-        print('Downloaded')
-        print("")
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download([ "%s" %url ]) # It wants me to pass a list of urls so i'm creating one right here
+        
         
     except Exception as e:
         print(e)
-    
-def downloadHiRes(url, resolution):
-    
-    resolution = resolution + "p"
-    
-    print('Started ' + url)
-    
-    try:
-        youtube = YouTube(url)
-    
-        # Getting all available resolutions
-    
-        video = youtube.streams.filter(only_video = True, file_extension = "mp4")
-        print(video)
+
+
+
+
+#   SAVING FLOW SETTINGS AND OTHER FLOW HELPER FUNCTIONS
+
+#TODO add a list of dict that fetches and stores itself in a json file and has a setter fuction for flows to selfreport (sus) their settings
+
+jellyfin = True
+
+flowData = [] # Stores flow settings. Saved to a json file.
+flowProcesses = []
+
+"""
+"id" : 0,
+"name" : "0 playlist title",
+"workingDirectory" : "/media",
+"interval" : 43200,
+"limit" : 0,
+"resolution" : "720",
+"playlistUrl" : ""
+"""
+
+
+def getPlaylistName(url):
+    # Gets the name of a playlist
         
-        # Checking if user requested a specific resolution
-        if resolution != "MAXp":
-            # Checking if the requested resolution is available
-            temp = video.filter(res = resolution)
-            print(temp)
+    with YoutubeDL({'quiet': 'True',}) as ydl:
+        info_dict = ydl.extract_info(url, download=False)
+        #playlist_url = info_dict.get("url", None)
+        #playlist_id = info_dict.get("id", None)
+        playlist_title = info_dict.get('title', None)
+
+    return(playlist_title) 
+
+# Creates a dictionary and adds it to the list
+def createFlow(workingDirectory, interval, limit, resolution, playlistUrl):
+    
+        id = len(flowData)
+        name = str(id) + " " + removeBadChars(getPlaylistName(playlistUrl))
+        if jellyfin:
+            workingDirectory = workingDirectory + "/" + name
             
-            if len(temp) == 0: 
-                # If the video is not available in the requested resolution, get the highest possible.
-                print("Requested resolution is not available")
-                video.desc()
-                print(video.first())
-            else:
-                video = temp
+        newFlow = {"id" : id,
+            "name" : name,
+            "workingDirectory" : workingDirectory,
+            "interval" : interval,
+            "limit" : limit,
+            "resolution" : resolution,
+            "playlistUrl" : playlistUrl
+        }
         
-        
-        video.first().download(filename = "temp_video_" + url.split("v=")[-1] + ".mp4")
-        
-        # Downloading the audio
-        
-        audio = youtube.streams
-        audio.get_audio_only().download(filename = "temp_audio_" + url.split("v=")[-1] + ".mp4")
-        
-        # Merging video and audio together
-        
-        print('Merging video and audio, this might take a while')
-        
-        videoClip = VideoFileClip("temp_video_" + url.split("v=")[-1] + ".mp4")
-        audioClip = AudioFileClip("temp_audio_" + url.split("v=")[-1] + ".mp4")
-        
-        completeClip = videoClip.set_audio(audioClip)
-        completeClip.write_videofile(filename = "final_" + url.split("v=")[-1] + ".mp4", audio_codec = "aac")
-        
-        # Removing temporary video and audio files
-        
-        os.remove("temp_video_" + url.split("v=")[-1] + ".mp4")
-        os.remove("temp_audio_" + url.split("v=")[-1] + ".mp4")
-        
-        # Renaming final file here instead of during creation to not confuse the terminal with emojis or anything like that.
-        
-        newName = removeBadChars(youtube.title) + ".mp4"
-        os.rename("final_" + url.split("v=")[-1] + ".mp4", newName)
-        
-        pathToTargetFolder = pathToBaseFolder + "/" + removeBadChars(youtube.title)
-        
-        if len(pathToBaseFolder) != 0:
-            shutil.move(newName, pathToTargetFolder)
-            urllib.request.urlretrieve(youtube.thumbnail_url, pathToTargetFolder + "/poster.jpg")
-            
-        
-        print('Merged')
-        print("")
-        
-    except Exception as e:
-        print(e)
-    
-    
-#   LOGGING DOWNLOADED VIDEOS
-
-# Creates a log file on the first run 
-try:
-    file = open(pathToBaseFolder + "/downloadedUrls" + '.txt', 'x')
-    file.close
-except:
-    pass
-
-# Used to add urls of newly downloaded videos to a log file
-def appendFile(newUrls):
-    with open(pathToBaseFolder + "/downloadedUrls" + '.txt', 'a') as file:
-        for url in newUrls:
-            file.write(url + " ")
-
-# Used to fetch urls of previously downloaded videos to compare with urls from YT playlist
-def readFile():
-    urls = []
-    with open(pathToBaseFolder + "/downloadedUrls" + '.txt', 'r') as file:
-        raw = file.read()
-    urls = raw.split()
-    return(urls)
-
-# Shows new videos in the playlist
-def compare(local, online): 
-    
-    for url in local:
-        try:
-            online.remove(url)
-        except:
-            print("Local video no longer exists in the playlist")
-    
-    difference = online 
-    return difference    
-    
-    
+        flowData.append(newFlow)
+        print("Added new flow " + str(newFlow))
+ 
     
 
-#   CHECKING FOR NEW VIDEOS AND DOWNLOADING THEM
 
-def checkPlaylist(playlistUrl):
-    local = readFile()
-    online = getUrls(playlistUrl)
-    newVideos = compare(local, online)
-    
-    return(newVideos)
 
-def downloadVideos(urls, resolution):
-    for url in urls:
-        if resolution == "720":
-            download(url)
-        else:
-            downloadHiRes(url, resolution)
-        
+
         
         
 #   UI
 
 if showLicenceNotice == True:
     print("""
-    YouTube Backloader  Copyright (C) 2022  Pixselious
+    Backloader  Copyright (C) 2022  Pixselious
     This program comes with ABSOLUTELY NO WARRANTY; for details read LICENCE.txt .
     This is free software, and you are welcome to redistribute it
     under certain conditions; Read LICENCE.txt for details.
     
-    Thank you to the contributors of pytube and moviepy
+    Thank you to the contributors of yt-dlp
     """)
 
 print("")
 
 
-if ignoreCurrent == ("n" or "N"):
-    currentVideos = checkPlaylist(playlistUrl)
-    appendFile(currentVideos)
+def flowInstance (id, name, workingDirectory, interval, limit, resolution, playlistUrl):
 
-for i in range(count):
-    newVideos = checkPlaylist(playlistUrl)
-    
-    if len(newVideos) == 0:
-        print("No new videos")
+    print(name+" Flow started")
+        
+    if limit == 0:   
+        while True:
+            print(name+" Checking playlist")
+            download(playlistUrl, resolution, workingDirectory, id) #Downloading videos, thumbnails and metadata
+            
+            thumbnails = [os.path.join(root, name) #Getting paths to all thumbnails
+                for root, dirs, files in os.walk(workingDirectory)
+                for name in files
+                if name.endswith(".webp")]
+            
+            for thumbnail in thumbnails: #Converting thumbnails into a supported format
+                tmp = Image.open(thumbnail).convert("RGB")
+                tmp.save(thumbnail.replace(".webp", ".jpg"), "jpeg")
+                os.remove(thumbnail) #Removing old thumbnails
+            
+            print(name+" Waiting " + str(interval) + " seconds")
+            sleep(interval)
     else:
-        downloadVideos(newVideos, resolution)
-        appendFile(newVideos)
+        for i in range(limit):
+            print(name+" Checking playlist")
+            download(playlistUrl, resolution, workingDirectory, id)    
+            
+            thumbnails = [os.path.join(root, name)
+                for root, dirs, files in os.walk(workingDirectory)
+                for name in files
+                if name.endswith(".webp")]
+            
+            for thumbnail in thumbnails:
+                tmp = Image.open(thumbnail).convert("RGB")
+                tmp.save(thumbnail.replace(".webp", ".jpg"), "jpeg")
+                os.remove(thumbnail)
+            
+            print(name+" Waiting " + str(interval) + " seconds")
+            sleep(interval)
+            
+            i += 1
+        print(name+" Reached limit of checks")
+        
+    print(name+" Flow ended")
+        
     
-    print("Waiting " + str(interval) + " seconds")
-    sleep(interval)
     
-    i += 1
     
-print("Reached limit of checks")
+    
+# MULTIPROCESSING
+
+
+if __name__ == '__main__':
+    
+    #TODO: Load flowData from memory
+    
+    createFlow(workingDirectory= "/path/to/jellyfin/media", interval= 1600, limit= 0, resolution= "720", playlistUrl= "https://www.youtube.com/watch?v=dQw4w9WgXcQ") # Resolution supports any valid resolution number (must be a string) and these keywords: BEST WORST AUDIO. 
+    
+    for flow in flowData:
+        flowProcesses.append(mp.Process(target = flowInstance, name = "Backloader " + flow["name"], args = (flow["id"], flow["name"], flow["workingDirectory"], flow["interval"], flow["limit"], flow["resolution"], flow["playlistUrl"])))
+    
+    for process in flowProcesses:
+        process.start()
+    
