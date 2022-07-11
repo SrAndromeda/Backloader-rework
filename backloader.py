@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 """
     
     Backloader will download new videos from a selected YouTube playlist.
@@ -55,19 +54,20 @@ def download(url, resolution, pathToTargetFolder, flowId):
     if str(resolution) == '720':
         format = 'best' # Selecting the best progressive (video and audio in one file) stream
     elif str(resolution) == 'BEST':
-        format = 'bestaudio+bestvideo/best' #Selecting best audio and merging it to best video. If NA, fall back to best progressive stream.
+        format = 'bestaudio[ext=m4a]+bestvideo[ext=mp4]/best' #Selecting best audio and merging it to best video. If NA, fall back to best progressive stream.
     elif str(resolution) == 'WORST':
-        format = 'wv*+wa'       #Selecting worst video and merging it to worst audio. 
+        format = 'wv*+wa'       #Selecting worst video and merging it to worst audio !!!very slow download speed!!!
     elif str(resolution) == 'AUDIO':
-        format = 'bestaudio' #Selecting the best audio only stream 
+        format = 'bestaudio[ext=m4a]' #Selecting the best audio only stream 
     else:
-        format = 'bestaudio+bestvideo[height={}]/bestaudio+bestvideo/best'.format(str(resolution)) #Selecting best audio and merging it to video of requested resolution. If NA, fall back to best separate streams, if NA fall back to best progressive stream.
+        format = 'bestaudio[ext=m4a]+bestvideo[height={}][ext=mp4]/bestaudio[ext=m4a]+bestvideo[ext=mp4]/best'.format(str(resolution)) #Selecting best audio and merging it to video of requested resolution. If NA, fall back to best separate streams, if NA fall back to best progressive stream.
+
     
     #Selecting appropriate output templates for each supported library type
     #Guide for these unreadable blobs https://github.com/yt-dlp/yt-dlp#output-template
     if str(resolution) == 'AUDIO':
         outtmpl = {
-                'default': '%(channel)s /%(title)s [%(id)s].%(ext)s'
+                'default': '%(channel)s /%(title)s.%(ext)s'
         } # Music library type https://jellyfin.org/docs/general/server/media/music.html
     else:
         outtmpl = {
@@ -76,13 +76,13 @@ def download(url, resolution, pathToTargetFolder, flowId):
                 'infojson': '%(title)s [%(id)s]/%(title)s [%(id)s].%(ext)s'
             } # Movies library type https://jellyfin.org/docs/general/server/media/movies.html
     
-    
+
     try:
         
         ydl_opts = {
             'format': format,       #What to download
             'writethumbnail': 'True',       #Download the thumbnail
-            'download_archive': 'downloaded {}.txt'.format(flowId),         #Keep a record of  downloaded videos
+            'download_archive': 'downloaded_{}.txt'.format(flowId),         #Keep a record of  downloaded videos 
             'writeinfojson': 'True',        #Download video metadata (description, author, etc)
             'merge_output_format': 'mp4',       #Keep videos mp4
             'paths': {
@@ -90,7 +90,6 @@ def download(url, resolution, pathToTargetFolder, flowId):
                 'temp': pathToTargetFolder + '/tmp'
             },      #Where to save the videos
             'outtmpl': outtmpl,         #Where to save the videos and how to name them
-            'quiet': 'True',        #Do not show useless info (warnings are still being shown)
             'progrss': 'True',       #Show progress bars   
             'embed_metadata': 'True'        #Embed the thumbnail, subtitles, chapters and other metadata when possible 
         }
@@ -233,7 +232,7 @@ if __name__ == '__main__':
     
     #TODO: Load flowData from memory
     
-    createFlow(workingDirectory= "Path to your media folder here (a library folder will be created automatically)", interval= 3, limit= 3, resolution= "720", playlistUrl= "Link to your playlist here") # Resolution supports any valid resolution number (must be a string) and these keywords: BEST WORST (AUDIO audio files are not shown in jellyfin, working on it). 
+    createFlow(workingDirectory= "/path/to/jellyfin/media", interval= 1600, limit= 0, resolution= "720", playlistUrl= "https://www.youtube.com/watch?v=dQw4w9WgXcQ") # Resolution supports any valid resolution number (must be a string) and these keywords: BEST WORST AUDIO. 
     
     for flow in flowData:
         flowProcesses.append(mp.Process(target = flowInstance, name = "Backloader " + flow["name"], args = (flow["id"], flow["name"], flow["workingDirectory"], flow["interval"], flow["limit"], flow["resolution"], flow["playlistUrl"])))
