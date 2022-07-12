@@ -1,7 +1,7 @@
-# YouTube Backloader
 
-Backloader is a project for automatically downloading videos from YouTube in the background. You can monitor multiple playlists at the same time. It supports any quality, HDR, audio-only downloads and slow 144p downloads.
+Backloader is a project for automatically downloading videos from YouTube in the background. You can monitor multiple playlists at the same time. It supports any quality, HDR, audio-only downloads and slow 144p downloads. Designed for Jellyfin.
 
+[[_TOC_]]
 
 ## Run inside of a docker container (recommended)
 
@@ -13,7 +13,7 @@ Backloader is a project for automatically downloading videos from YouTube in the
     | base_directory | /media | A directory where the videos will be saved. **Do not change the default value** if you plan to run the script inside a container. |
     | interval | 3600 | Interval between checks in seconds. 1 hour = 3600 seconds. |
     | limit | 0 | Limit tho the total number of checks for this playlist. 0 = unlimited. |
-    | resolution | 720 | Select quality of the downloaded videos. Any resolution other than 720 and AUDIO require merging audio and video streams on your computer. Read select a resolution for more info. |
+    | resolution | 720 | Select quality of the downloaded videos. Any resolution other than 720 and AUDIO require merging audio and video streams on your computer. Read "select a resolution" for more info. |
     | url | https://www.youtube.com/watch?v=dQw4w9WgXcQ | Link to your playlist. Use YouTube's share button to avoid any confusion. |
 4. Save and close the file
 5. **Build a docker image.** Copy the path to the folder where the script is. (Assuming you have Docker installed) Run this command in the terminal: `docker build -t backloader YOUR_PATH_HERE` 
@@ -24,11 +24,13 @@ To stop the container, run this command `docker ps`, copy the name of the contai
 Here is a [video tutorial](https://youtu.be/dHGdwpchwL8) if you need more help.
 
 
-## Run as a bare script (only on macOS and Linux)
+
+
+<details><summary>You can also run Bacloader as a bare script (only on macOS and Linux)</summary>
 
 1. **Download** the script. 
 2. Install or **update python**. Follow the guide on [python.org](http://python.org).
-3. **Install dependencies** `pip install yt_dlp`. Also, make sure that ffmpeg is installed on your computer.
+3. **Install dependencies** `pip install yt_dlp pillow`.
 4. **Create a playlist** on YouTube and set it to be public or accessible by link. You can add some videos to it now.
 5. Open the script in any editor and **configure the values** on the last few lines. You need to set a path to the **folder** where the videos will be saved (`workingDirectory= "/Volumes/HDD/Jellyfin/media"`). Backloader will automatically create a new folder for every playlist. Set a link to the **playlist** that you want to monitor (`playlistUrl= "Your link"`). You might want to change the **resolution** in which the videos will be downloaded (`resolution= "1080"`) and set the script to **run forever** (`limit= 0`). Everything else will work fine with the default values (by default, the playlist is checked for new videos every 30 minutes). 
 6. **Run** the script `python path/to/backloader.py`.
@@ -41,15 +43,15 @@ For example, here is my personal configuration:
 ```
 
 Backloader runs flows as separate processes in parallel, so you can create as many as you want.
-
+</details>
 
 ## Select a resolution
 
 Here is what you can put in the "resolution" value:
-- Any valid resolution without the "p" (**144, 240, 360, 480, 720, 1080, 1440, 2140 and so on***). Keep in mind that YouTube limits bandwigth for small resolutions, so you will not be able to download a small file instantly. Videos in 720p are download as a complete file. Videos in a higher resolution require separate downloads for video and audio. These files are then merged on your computer.
+- Any valid resolution without the "p" (**144, 240, 360, 480, 720, 1080, 1440, 2140 and so on**). Keep in mind that YouTube limits bandwidth for small resolutions, so you will not be able to download a small file instantly. Videos in 720p are download as a complete file. Videos in a higher resolution require separate downloads for video and audio. These files are then merged on your computer.
 - **BEST** Backloader will download the best available resolution.
 - **WORST** Backloader will download the worst available resolution. Keep in mind the slow download speed.
-- **AUDIO** Backloader will download only the audio stream. It will create folders for each artist (channel) and put .m4a files there. You will need to sort these by albums yourself. Here are some useful links: [Picard - an app to automate adding metadata to files](https://picard.musicbrainz.org), [how to organize your files for Jellyfin](https://jellyfin.org/docs/general/server/media/music.html).
+- **AUDIO** Backloader will download only the audio stream. It will create folders for each artist (channel) and put .m4a files there. You will need to sort these by albums yourself. Here are some useful links: [Picard - an app to automate adding metadata to files](https://picard.musicbrainz.org), [how to organize your music for Jellyfin](https://jellyfin.org/docs/general/server/media/music.html).
 
 All downloads are optimized for Jellyfin. Videos are encoded using H264, audio is in AAC. All of this is contained in mp4. Thumbnails are converted to jpg.
 
