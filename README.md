@@ -16,8 +16,8 @@ Backloader is a project for automatically downloading videos from YouTube in the
     | resolution | 720 | Select quality of the downloaded videos. Any resolution other than 720 and AUDIO require merging audio and video streams on your computer. Read select a resolution for more info. |
     | url | https://www.youtube.com/watch?v=dQw4w9WgXcQ | Link to your playlist. Use YouTube's share button to avoid any confusion. |
 4. Save and close the file
-5. Build a docker image. Copy the path to the folder where the script is. (Asumming you have Docker installed) Run this command in the terminal: `docker build -t backloader YOUR_PATH_HERE` 
-6. Run the docker image. Copy the path to the folder where you want to save videos (Jellyfin media folder). Backloader will create subfolders for each playlist (each library). Run this command in the terminal: `docker run -v YOUR_PATH_HERE:/media backloader`
+5. **Build a docker image.** Copy the path to the folder where the script is. (Assuming you have Docker installed) Run this command in the terminal: `docker build -t backloader YOUR_PATH_HERE` 
+6. **Run the docker image.** Copy the path to the folder where you want to save videos (Jellyfin media folder). Backloader will create subfolders for each playlist (each library). Run this command in the terminal: `docker run -v YOUR_PATH_HERE:/media backloader`
 
 To stop the container, run this command `docker ps`, copy the name of the container tagged "backloader" and then run this command `docker kill NAME_HERE`.
 
@@ -43,6 +43,19 @@ For example, here is my personal configuration:
 Backloader runs flows as separate processes in parallel, so you can create as many as you want.
 
 
+## Select a resolution
+
+Here is what you can put in the "resolution" value:
+- Any valid resolution without the "p" (**144, 240, 360, 480, 720, 1080, 1440, 2140 and so on***). Keep in mind that YouTube limits bandwigth for small resolutions, so you will not be able to download a small file instantly. Videos in 720p are download as a complete file. Videos in a higher resolution require separate downloads for video and audio. These files are then merged on your computer.
+- **BEST** Backloader will download the best available resolution.
+- **WORST** Backloader will download the worst available resolution. Keep in mind the slow download speed.
+- **AUDIO** Backloader will download only the audio stream. It will create folders for each artist (channel) and put .m4a files there. You will need to sort these by albums yourself. Here are some useful links: [Picard - an app to automate adding metadata to files](https://picard.musicbrainz.org), [how to organize your files for Jellyfin](https://jellyfin.org/docs/general/server/media/music.html).
+
+All downloads are optimized for Jellyfin. Videos are encoded using H264, audio is in AAC. All of this is contained in mp4. Thumbnails are converted to jpg.
+
+
+
+
 ## For Jellyfin users
 
 
@@ -52,7 +65,6 @@ Just run the script, create a new library and point Jellyfin to the new folder (
 
 I recommend using [this plugin](https://github.com/ankenyr/jellyfin-youtube-metadata-plugin) for downloading video and channel metadata alongside backloader. Follow the guide provided by its author, backloader does not require any additional setup.
 
-If you select AUDIO, backloader will create folders for each artist (channel) and put .m4a files there. You will need to sort these by albums yourself. Here are some useful links: [app to automate adding metadata to files](https://picard.musicbrainz.org), [how to organize your files for Jellyfin](https://jellyfin.org/docs/general/server/media/music.html).
 
 
 
