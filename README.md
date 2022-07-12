@@ -12,7 +12,7 @@ Backloader is a project for automatically downloading videos from YouTube in the
     | ------ | ------ | ------ |
     | base_directory | /media | A directory where the videos will be saved. **Do not change the default value** if you plan to run the script inside a container. |
     | interval | 3600 | Interval between checks in seconds. 1 hour = 3600 seconds. |
-    | limit | 0 | Limit tho the total number of checks for this playlist. 0 = unlimited. |
+    | limit | 0 | Limit the total number of checks for this playlist. 0 = unlimited. |
     | resolution | 720 | Select quality of the downloaded videos. Any resolution other than 720 and AUDIO require merging audio and video streams on your computer. Read "select a resolution" for more info. |
     | url | https://www.youtube.com/watch?v=dQw4w9WgXcQ | Link to your playlist. Use YouTube's share button to avoid any confusion. |
 4. Save and close the file
