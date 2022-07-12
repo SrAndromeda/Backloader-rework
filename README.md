@@ -21,6 +21,8 @@ Backloader is a project for automatically downloading videos from YouTube in the
 
 To stop the container, run this command `docker ps`, copy the name of the container tagged "backloader" and then run this command `docker kill NAME_HERE`.
 
+Here is a [video tutorial](https://youtu.be/dHGdwpchwL8) if you need more help.
+
 
 ## Run as a bare script (only on macOS and Linux)
 
