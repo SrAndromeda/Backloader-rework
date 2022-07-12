@@ -26,7 +26,7 @@ Here is a [video tutorial](https://youtu.be/dHGdwpchwL8) if you need more help.
 
 
 
-<details><summary>You can also run Bacloader as a bare script (only on macOS and Linux)</summary>
+<details><summary>You can also run Backloader as a bare script (only on macOS and Linux)</summary>
 
 1. **Download** the script. 
 2. Install or **update python**. Follow the guide on [python.org](http://python.org).
