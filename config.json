@@ -1,0 +1,11 @@
+{
+    "flows": [
+        {
+            "base_directory": "/media", 
+            "interval": "3600", 
+            "limit": "0", 
+            "resolution": "720", 
+            "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        }
+    ]
+}

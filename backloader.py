@@ -19,13 +19,14 @@
 """
 
 
-showLicenceNotice = False
+showLicenceNotice = True
 
 from time import sleep
 from yt_dlp import YoutubeDL
 import os
 from PIL import Image
 import multiprocessing as mp
+import json
 
 
 
@@ -104,12 +105,6 @@ def download(url, resolution, pathToTargetFolder, flowId):
 
 
 
-#   SAVING FLOW SETTINGS AND OTHER FLOW HELPER FUNCTIONS
-
-#TODO add a list of dict that fetches and stores itself in a json file and has a setter fuction for flows to selfreport (sus) their settings
-
-jellyfin = True
-
 flowData = [] # Stores flow settings. Saved to a json file.
 flowProcesses = []
 
@@ -140,8 +135,8 @@ def createFlow(workingDirectory, interval, limit, resolution, playlistUrl):
     
         id = len(flowData)
         name = str(id) + " " + removeBadChars(getPlaylistName(playlistUrl))
-        if jellyfin:
-            workingDirectory = workingDirectory + "/" + name
+        
+        workingDirectory = workingDirectory + "/" + name
             
         newFlow = {"id" : id,
             "name" : name,
@@ -156,7 +151,16 @@ def createFlow(workingDirectory, interval, limit, resolution, playlistUrl):
         print("Added new flow " + str(newFlow))
  
     
+# Loads flow data from config.json 
+def loadFlows():
+    f = open('config.json')
 
+    data = json.load(f)
+
+    for i in data['flows']:
+        createFlow(i["base_directory"], int(i["interval"]), int(i["limit"]), i["resolution"], i["url"])
+        
+    f.close()
 
 
 
@@ -221,8 +225,7 @@ def flowInstance (id, name, workingDirectory, interval, limit, resolution, playl
         
     print(name+" Flow ended")
         
-    
-    
+
     
     
 # MULTIPROCESSING
@@ -230,9 +233,10 @@ def flowInstance (id, name, workingDirectory, interval, limit, resolution, playl
 
 if __name__ == '__main__':
     
-    #TODO: Load flowData from memory
+    loadFlows()
     
-    createFlow(workingDirectory= "/path/to/jellyfin/media", interval= 1600, limit= 0, resolution= "720", playlistUrl= "https://www.youtube.com/watch?v=dQw4w9WgXcQ") # Resolution supports any valid resolution number (must be a string) and these keywords: BEST WORST AUDIO. 
+    # Uncomment and fill out the template below if you want to skip the config.json file
+    #createFlow(workingDirectory= "/path/to/jellyfin/media", interval= 3600, limit= 0, resolution= "720", playlistUrl= "https://www.youtube.com/watch?v=dQw4w9WgXcQ") 
     
     for flow in flowData:
         flowProcesses.append(mp.Process(target = flowInstance, name = "Backloader " + flow["name"], args = (flow["id"], flow["name"], flow["workingDirectory"], flow["interval"], flow["limit"], flow["resolution"], flow["playlistUrl"])))
