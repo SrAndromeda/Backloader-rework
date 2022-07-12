@@ -32,17 +32,11 @@ Here is a [video tutorial](https://youtu.be/dHGdwpchwL8) if you need more help.
 2. Install or **update python**. Follow the guide on [python.org](http://python.org).
 3. **Install dependencies** `pip install yt_dlp pillow`.
 4. **Create a playlist** on YouTube and set it to be public or accessible by link. You can add some videos to it now.
-5. Open the script in any editor and **configure the values** on the last few lines. You need to set a path to the **folder** where the videos will be saved (`workingDirectory= "/Volumes/HDD/Jellyfin/media"`). Backloader will automatically create a new folder for every playlist. Set a link to the **playlist** that you want to monitor (`playlistUrl= "Your link"`). You might want to change the **resolution** in which the videos will be downloaded (`resolution= "1080"`) and set the script to **run forever** (`limit= 0`). Everything else will work fine with the default values (by default, the playlist is checked for new videos every 30 minutes). 
+5. Follow steps 3 and 4 from the list above.
 6. **Run** the script `python path/to/backloader.py`.
 
-For example, here is my personal configuration:
-```
-    createFlow(workingDirectory= "/Volumes/HDD/Jellyfin media", interval= 1800, limit= 0, resolution= "1080", playlistUrl= "https://youtube.com/playlist?list=PL-redacted") # Main video playlist
-    createFlow(workingDirectory= "/Volumes/HDD/Jellyfin media", interval= 3600, limit= 0, resolution= "720", playlistUrl= "https://youtube.com/playlist?list=PL-redacted") # Secondary video playlist
-    createFlow(workingDirectory= "/Volumes/HDD/Jellyfin media", interval= 3600, limit= 0, resolution= "AUDIO", playlistUrl= "https://youtube.com/playlist?list=PL-redacted") # Music
-```
+Note that backloader will create some files at this location "/", so you might want to run it inside of a virtual environment.
 
-Backloader runs flows as separate processes in parallel, so you can create as many as you want.
 </details>
 
 ## Select a resolution
