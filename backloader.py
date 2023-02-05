@@ -122,7 +122,7 @@ flowProcesses = []
 def getPlaylistName(url):
     # Gets the name of a playlist
         
-    with YoutubeDL({'quiet': 'True',}) as ydl:
+    with YoutubeDL({'quiet': 'True', 'ignoreerrors': True, }) as ydl:
         info_dict = ydl.extract_info(url, download=False)
         #playlist_url = info_dict.get("url", None)
         #playlist_id = info_dict.get("id", None)
