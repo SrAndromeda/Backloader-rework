@@ -1,0 +1,136 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+
+	<style>
+		.form-field {
+			background-color: #1a1a1a;
+			color: white;
+			border: solid 1px white;
+		}
+	</style>
+
+
+	<head>
+    <title>Backloader</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		{% tailwind_css %}
+	</head>
+
+	<body class="font-sans leading-normal tracking-normal" style="background-color: #1a1a1a; color: white;">
+		
+		<div class="flex w-screen h-screen flex-col-reverse sm:flex-row">
+
+			<div class="flex-grow-0 overflow-hidden border-t sm:border-t-0 sm:border-r border-neutral-950 w-screen h-16 sm:w-2/6 md:w-60 lg:w-64 sm:h-screen relative">
+
+				<div class="absolute top-0 left-0 z-10 h-full w-full p-1 sm:py-5 sm:px-2.5 flex flex-row sm:flex-col justify-evenly sm:justify-start ">
+
+					<a href="{% url 'dashboard' %}">
+						<div class="flex flex-col sm:flex-row text-center sm:text-left {% if request.resolver_match.url_name == 'dashboard' %}bg-zinc-700{% endif %} rounded-md">
+							
+							<svg xmlns="http://www.w3.org/2000/svg" class="m-1 sm:m-2 sm:mr-2 h-8 sm:h-4 fill-violet-600" viewBox="0 0 16 16">
+								<path d="M0 1a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V1zm9 0a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V1zm0 9a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-5z"/>
+							</svg>
+							<p class="text-xs align-top sm:text-sm sm:mt-1.5 sm:tracking-wide font-extralight sm:font-extralight">Dashboard</p>
+							
+						</div>
+					</a>
+					
+					<a href="{% url 'flows' %}">
+						<div class="flex flex-col sm:flex-row text-center sm:text-left {% if request.resolver_match.url_name == 'flows' %}bg-zinc-700{% endif %} rounded-md">
+							<svg xmlns="http://www.w3.org/2000/svg" class="m-1 sm:m-2 sm:mr-2 h-8 sm:h-4 fill-violet-600" viewBox="0 0 16 16">
+								<path fill-rule="evenodd" d="M8 0a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 4.095 0 5.555 0 7.318 0 9.366 1.708 11 3.781 11H7.5V5.5a.5.5 0 0 1 1 0V11h4.188C14.502 11 16 9.57 16 7.773c0-1.636-1.242-2.969-2.834-3.194C12.923 1.999 10.69 0 8 0zm-.354 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V11h-1v3.293l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z"/>
+							</svg>
+							<p class="text-xs align-top sm:text-sm sm:mt-1.5 sm:tracking-wide font-extralight sm:font-extralight">Flows</p>
+						</div>
+					</a>
+
+					<a href="{% url 'outlets' %}">
+						<div class="flex flex-col sm:flex-row text-center sm:text-left {% if request.resolver_match.url_name == 'outlets' %}bg-zinc-700{% endif %} rounded-md">
+							<svg xmlns="http://www.w3.org/2000/svg" class="m-1 sm:m-2 sm:mr-2 h-8 sm:h-4 fill-violet-600" viewBox="0 0 16 16">
+								<path d="M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5.5v3A1.5 1.5 0 0 0 6 11.5H.5a.5.5 0 0 0 0 1H6A1.5 1.5 0 0 0 7.5 14h1a1.5 1.5 0 0 0 1.5-1.5h5.5a.5.5 0 0 0 0-1H10A1.5 1.5 0 0 0 8.5 10V7H14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1z"/>
+							</svg>
+							<p class="text-xs align-top sm:text-sm sm:mt-1.5 sm:tracking-wide font-extralight sm:font-extralight">Outlets</p>
+						</div>
+					</a>
+
+					<a href="{% url 'settings' %}">
+						<div class="flex flex-col sm:flex-row text-center sm:text-left {% if request.resolver_match.url_name == 'settings' %}bg-zinc-700{% endif %} rounded-md">
+							<svg xmlns="http://www.w3.org/2000/svg" class="m-1 sm:m-2 sm:mr-2 h-8 sm:h-4 fill-violet-600" viewBox="0 0 16 16">
+								<path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+							</svg>
+							<p class="text-xs align-top sm:text-sm sm:mt-1.5 sm:tracking-wide font-extralight sm:font-extralight">Settings</p>
+						</div>
+					</a>
+
+				</div>
+
+				<svg class"absolute top-0 left-0 -z-10 w-0 h-0 sm:w-full sm:h-full" preserveAspectRatio="none" viewBox="0 -70 450 900" style="height: 100vh; width: 120%; opacity: 0.2; mix-blend-mode: screen; filter: blur(40px);">
+                    
+                    <g fill="#FF6F61">
+                        <circle r="87" cx="165" cy="362"/>
+                        <circle r="33" cx="353" cy="778"/>
+                        <circle r="60" cx="313" cy="473"/>
+                        <circle r="90" cx="104" cy="173"/>
+                        <circle r="97" cx="205" cy="665"/>
+                        <circle r="52" cx="324" cy="199"/>
+                    </g>
+                    <g fill="#715DF2">
+                        <circle r="87" cx="208" cy="124"/>
+                        <circle r="33" cx="285" cy="646"/>
+                        <circle r="44" cx="102" cy="446"/>
+                        <circle r="65" cx="127" cy="746"/>
+                        <circle r="83" cx="299" cy="377"/>
+                        <circle r="82" cx="357" cy="808"/>
+                        <circle r="62" cx="96" cy="259"/>
+                    </g>
+                    <g fill="#ff4d00">
+                        <circle r="12" cx="179" cy="461"/>
+                        <circle r="5" cx="65" cy="692"/>
+                        <circle r="8" cx="239" cy="233"/>
+                        <circle r="4" cx="95" cy="357"/>
+                        <circle r="4" cx="335" cy="243"/>
+                        <circle r="9" cx="316" cy="203"/>
+                        <circle r="8" cx="277" cy="56"/>
+                        <circle r="8" cx="362" cy="198"/>
+                        <circle r="10" cx="35" cy="17"/>
+                        <circle r="6" cx="355" cy="532"/>
+                        <circle r="6" cx="356" cy="422"/>
+                        <circle r="8" cx="287" cy="819"/>
+                        <circle r="7" cx="248" cy="82"/>
+                        <circle r="5" cx="432" cy="764"/>
+                        <circle r="6" cx="424" cy="33"/>
+                        <circle r="8" cx="418" cy="523"/>
+                        <circle r="5" cx="162" cy="786"/>
+                        <circle r="5" cx="108" cy="728"/>
+                    </g>
+				</svg>
+
+				
+
+
+
+				
+
+			</div>
+
+			<div class="flex-grow container p-5">
+
+				{% if messages %}
+					{% for message in messages%}
+					<div class="alert alert-{{ message.tags }}">
+						{{ message }}
+					</div>
+					{% endfor %}
+				{% endif %}
+
+				{% block content %}{% endblock %}
+			
+			<div>
+
+		</div>
+		
+	</body>
+</html>

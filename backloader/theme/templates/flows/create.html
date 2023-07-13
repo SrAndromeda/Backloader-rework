@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+
+
+<h1>Create flow</h1>
+
+
+
+<form method="post">
+    {% csrf_token %}
+    <label for="{{ form.name.id_for_label }}">Name:</label>
+    {% render_field form.name class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    <br>
+    <label for="{{ form.url.id_for_label }}">URL:</label>
+    {% render_field form.url class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    <br>
+    <label for="{{ form.type.id_for_label }}">Type:</label>
+    {% render_field form.type class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    <br>
+    <label for="{{ form.quality.id_for_label }}">Quality:</label>
+    {% render_field form.quality class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    <br>
+    <label for="{{ form.outlet.id_for_label }}">Outlet:</label>
+    {% render_field form.outlet class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    <br>
+    <label for="{{ form.interval.id_for_label }}">Interval:</label>
+    {% render_field form.interval class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    <br>
+    <input type="submit" value="Create">
+</form>
+
+
+
+
+
+{% endblock content %}

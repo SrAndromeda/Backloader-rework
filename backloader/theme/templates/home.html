@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+dashboard
+
+{{ response }}
+
+<form id="dl">
+    {% csrf_token %}
+    <label for="url">URL:</label>
+    <input type="text" id="url" name="url">
+    <button type="submit">Download</button>
+</form>
+
+<script>
+    const form = document.getElementById('dl');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const data = {
+            'url': form.url.value
+        };
+        console.log(data);
+        fetch('http://127.0.0.1:8000/api/download', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(responseData => {
+            console.log(responseData);
+            // Handle the API response as needed
+        });
+    });
+</script>
+
+{% endblock content %}

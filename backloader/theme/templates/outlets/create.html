@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+
+outlets
+
+  <h1>Create Outlet Form</h1>
+  
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+      {% render_field form.name class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    </div>
+    <div class="form-group">
+      <label for="{{ form.path.id_for_label }}">{{ form.path.label }}</label>
+      {% render_field form.path class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    </div>
+    <div class="form-group">
+      <label for="{{ form.video.id_for_label }}">{{ form.video.label }}</label>
+      {% render_field form.video class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    </div>
+    <div class="form-group">
+      <label for="{{ form.info.id_for_label }}">{{ form.info.label }}</label>
+      {% render_field form.info class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    </div>
+    <div class="form-group">
+      <label for="{{ form.temp.id_for_label }}">{{ form.temp.label }}</label>
+      {% render_field form.temp class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+
+{% endblock content %}

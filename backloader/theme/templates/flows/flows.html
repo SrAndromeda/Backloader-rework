@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+
+{% if flows|length == 0 %}
+
+    <h1>No Flows</h1>
+    <a href="{% url 'flows-create' %}" class="bg-blue-700 rounded-md p-1">Create Flow</a>
+
+{% else %}
+
+  {% for flow in flows %}
+      <p>{{ flow }}</p>
+  {% endfor %}
+
+{% endif %}
+
+
+
+<form id="create">
+    <label for="interval">Interval:</label>
+    <input type="number" id="create_interval" name="interval" required>
+
+    <label for="id">Flow ID:</label>
+    <input type="text" id="create_id" name="id" maxlength="100" required>
+
+    <button type="submit">Create</button>
+</form>
+
+<script>
+    const form = document.getElementById('create');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const interval = document.getElementById('create_interval').value;
+      const flow_id = document.getElementById('create_id').value;
+
+      const payload = JSON.stringify({ interval, flow_id });
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/imer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: payload
+        });
+
+        if (!response.ok) {
+          throw new Error('API request failed');
+        }
+
+        const data = await response.json();
+        console.log(data);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+</script>
+
+
+
+
+
+
+
+{% endblock content %}
