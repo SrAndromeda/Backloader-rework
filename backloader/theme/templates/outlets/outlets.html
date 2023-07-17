@@ -2,13 +2,12 @@
 {% load static %}
 {% block content %}
 
-outlets
 
 <a href="{% url 'outlets-create' %}" class="bg-blue-700 rounded-md p-1">Create Outlet</a>
 
 {% if outlets|length == 0 %}
 
-    <h1>No Flows</h1>
+    <h1>No Outlets</h1>
     <a href="{% url 'outlets-create' %}" class="bg-blue-700 rounded-md p-1">Create Outlet</a>
     <p>{{outlets}}</p>
 

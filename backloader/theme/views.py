@@ -16,8 +16,12 @@ async def dashboardView(request, **kwargs):
 
 async def flowsView(request, **kwargs):
 
-    response = requests.get('http://127.0.0.1:8000/api/flow')
-    processed = json.loads(response.text)
+    async with httpx.AsyncClient() as client:
+        response = await client.get('http://127.0.0.1:8000/api/flow')
+        if response.status_code != httpx.codes.OK or response.text == '':
+            processed = {}
+        else:
+            processed = response.json()
 
     return render(request, 'flows/flows.html', {'flows': processed})
 
@@ -54,7 +58,7 @@ class CreateFlowForm(forms.Form):
             outlets = [(outlet['id'], outlet['name'])
                    for outlet in response.json()]
         except:
-            outlets = [(42, 'Nigga')]
+            outlets = []
 
         # populate choices for outlet field
         self.fields['outlet'].choices = outlets
@@ -64,16 +68,15 @@ class CreateFlowForm(forms.Form):
         
 
     def submit(self):
-        api_url = 'http://127.0.0.1:8000/api/flow/'
+        api_url = 'http://127.0.0.1:8000/api/flow'
+        
 
-        # get form data
-
-        name = self.cleaned_data['name']
-        url = self.cleaned_data['url']
-        type = self.cleaned_data['type']
-        quality = self.cleaned_data['quality']
-        outlet = self.cleaned_data['outlet']
-        interval = self.cleaned_data['interval']
+        name = self.data['name']
+        url = self.data['url']
+        type = self.data['type']
+        quality = self.data['quality']
+        outlet = self.data['outlet']
+        interval = self.data['interval']
 
         # prepare post data and make API call
         data = {
@@ -84,8 +87,8 @@ class CreateFlowForm(forms.Form):
             'outlet': outlet,
             'interval': interval,
         }
-        
-        response = requests.post(api_url, data=data)
+               
+        response = requests.post(api_url, json=data)
         response.raise_for_status()
 
 
@@ -101,14 +104,13 @@ def createFlowView(request, **kwargs):
 
 
 async def outletsView(request, **kwargs):
+    
     async with httpx.AsyncClient() as client:
         response = await client.get('http://127.0.0.1:8000/api/outlet')
-        if response.status_code != httpx.codes.OK:
+        if response.status_code != httpx.codes.OK or response.text == '':
             processed = {}
         else:
             processed = response.json()
-
-        print(processed)
 
     return render(request, 'outlets/outlets.html', {'outlets': processed})
 
@@ -127,14 +129,12 @@ class CreateOutletForm(forms.Form):
     def submit(self):
         api_url = 'http://127.0.0.1:8000/api/outlet'
 
-        cleaned_data = self.data
-
         # get form data
-        name = cleaned_data['name']
-        path = cleaned_data['path']
-        video = cleaned_data['video']
-        info = cleaned_data['info']
-        temp = cleaned_data['temp']
+        name = self.data['name']
+        path = self.data['path']
+        video = self.data['video']
+        info = self.data['info']
+        temp = self.data['temp']
         
         
 
@@ -148,7 +148,6 @@ class CreateOutletForm(forms.Form):
             'temp': temp,
         }
         
-        print(data) 
 
         response = requests.post(api_url, json=data)
         response.raise_for_status()
@@ -160,7 +159,6 @@ def createOutletView(request):
 
     if request.method == 'POST' and form.is_valid():
         
-        print(form.is_valid())
         
         form.submit()
         return redirect(reverse('outlets'))

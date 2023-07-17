@@ -2,6 +2,7 @@
 {% load static %}
 {% block content %}
 
+<a href="{% url 'flows-create' %}" class="bg-blue-700 rounded-md p-1">Create Flow</a>
 
 {% if flows|length == 0 %}
 
