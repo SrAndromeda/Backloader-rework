@@ -23,7 +23,7 @@
 		
 		<div class="flex w-screen h-screen flex-col-reverse sm:flex-row">
 
-			<div class="flex-grow-0 overflow-hidden border-t sm:border-t-0 sm:border-r border-neutral-950 w-screen h-16 sm:w-2/6 md:w-60 lg:w-64 sm:h-screen relative">
+			<div class="flex-grow-0 flex-shrink-0 overflow-hidden border-t sm:border-t-0 sm:border-r border-neutral-950 w-screen h-16 sm:w-2/6 md:w-60 lg:w-64 sm:h-screen relative">
 
 				<div class="absolute top-0 left-0 z-10 h-full w-full p-1 sm:py-5 sm:px-2.5 flex flex-row sm:flex-col justify-evenly sm:justify-start ">
 
@@ -116,7 +116,7 @@
 
 			</div>
 
-			<div class="flex-grow container p-5">
+			<div class="flex-grow overflow-y-scroll">
 
 				{% if messages %}
 					{% for message in messages%}

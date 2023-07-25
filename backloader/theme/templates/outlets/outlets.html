@@ -2,61 +2,59 @@
 {% load static %}
 {% block content %}
 
+<div class"h-screen w-full">
 
-<a href="{% url 'outlets-create' %}" class="bg-blue-700 rounded-md p-1">Create Outlet</a>
+<div class="flex w-full justify-between px-5 pt-2">
+  <div><h1 class="text-3xl font-bold">Outlets</h1></div>
+  <div>
+    
+    <a href="{% url 'outlets-create' %}"><div class="rounded-md bg-violet-600 flex">
+
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
+        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"></path>
+      </svg>
+
+    </div></a>
+
+
+  </div>
+</div>
+
+<div class="container h-fit p-5">
+
 
 {% if outlets|length == 0 %}
+      <div class="flex flex-col h-screen w-full items-center justify-center">
 
-    <h1>No Outlets</h1>
-    <a href="{% url 'outlets-create' %}" class="bg-blue-700 rounded-md p-1">Create Outlet</a>
-    <p>{{outlets}}</p>
+        <p class="text-2xl p-4 pt-0 max-w-md text-center font-light truncate">An outlet is a bundle of information that describes where and how to save downloaded videos.</p>
 
-{% else %}
+        <a href="{% url 'outlets-create' %}"><div class="rounded-xl bg-violet-600 flex" >
 
-  {% for outlet in outlets %}
-      <p>{{ outlet }}</p>
-  {% endfor %}
+          <p class="text-xl px-3 p-2">Create an outlet</p>
 
-{% endif %}
+        </div></a>
 
+      </div>
 
 
+  {% else %}
 
-<form id="delete">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
 
-    <label for="id">Timer ID:</label>
-    <input type="text" id="delete_id" name="id" maxlength="100" required>
+        {% for outlet in outlets %}
+          <div class="bg-neutral-950 rounded-xl p-3">
+            <h1 class="text-xl font-semibold truncate">{{ outlet.name }}</h1>
+            <p class="truncate">{{ outlet.path }}</p>
+          </div>
+        {% endfor %}
 
-    <button type="submit">Delete</button>
-</form>
+      </div>
 
-<script>
-    const form = document.getElementById('delete');
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const timer_id = document.getElementById('delete_id').value;
+  {% endif %}
 
-      const payload = JSON.stringify({ timer_id });
 
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/timer', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: payload
-        });
 
-        if (!response.ok) {
-          throw new Error('API request failed');
-        }
-
-        const data = await response.json();
-        console.log(data);
-      } catch (error) {
-        console.error(error);
-      }
-    });
-</script>
+</div>
+</div>
 
 {% endblock content %}

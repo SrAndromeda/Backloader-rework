@@ -9,11 +9,12 @@ from asgiref.sync import async_to_sync
 from yt_dlp import YoutubeDL
 import json
 import os
-import PIL
+from PIL import Image
 import threading
 import uuid
 import httpx
 import requests
+import subprocess
 
 
 from .models import Timer as TimerModel  
@@ -23,7 +24,9 @@ from .models import Outlet as OutletModel
 
 def timer_function(timer_id, interval, flow_id):
 
-    print(str(timer_id) + " executed with flow id " + str(flow_id))
+    print(str(timer_id) + " executing with flow id " + str(flow_id))
+    
+    yt_dl_flow(flow_id)
     
     timer_object = TimerModel.objects.get(timer_id=timer_id)
     timer_object.last_run = timezone.now()
@@ -34,18 +37,16 @@ def timer_function(timer_id, interval, flow_id):
     timer_thread.start()
     
 
-def create_timer(interval, flow_id):        
-    timer_id = str(uuid.uuid4())
+def create_timer(interval, flow_id, timer_id):   
     timer_thread = threading.Timer( interval, timer_function, args=(timer_id, interval, flow_id))
-    timer_thread.name = f"timer_{timer_id}"
+    timer_thread.name = f"timer_{timer_id}"   
     timer_thread.start()
         
-    return timer_id
+    return True 
 
 
 def stop_timer(timer_id):
     try:
-        #timer = Timer.objects.get(timer_id=timer_id)
         
         for thread in threading.enumerate():
             if thread.name == f"timer_{timer_id}":
@@ -59,10 +60,139 @@ def stop_timer(timer_id):
         return False
         
         
+def find_timer(timer_id):
+    try:
+        
+        for thread in threading.enumerate():
+            if thread.name == f"timer_{timer_id}":
+                return True
+        
+        return False
+                
+    except Timer.DoesNotExist:
+        print("Could not find thread:" + f"timer_{timer_id}")
+        
+        return False
+    
+    
+def initialize():
+    
+    print("Initializing...")
+    
+    try:
+    
+        i = 0
+        
+        for timer in TimerModel.objects.all():
+            
+            try:
+                
+                timer_id = timer.timer_id
+                flow_id = timer.flow_set.first().flow_id
+                
+                if not find_timer(timer_id):
+                    print("created timer" + str(i))
+                    i += 1
+                    create_timer(timer.interval, flow_id, timer_id)
+                    
+            except Exception as e:
+                print("Timer startup failed: " + str(e))
+            
+    except Exception as e:
+            print("Timer startup failed: " + str(e))
+    
+            
+
+
+
+
+
+
+
+def yt_dl_flow(flow_id):
+    
+    flow_object = FlowModel.objects.get(flow_id=flow_id)
+
+
+    format = ''
+    
+    match flow_object.quality:
+        case 'a':
+            format = 'bestaudio[ext=m4a]'
+        case 'max':
+            format = 'bestaudio[ext=m4a]+bestvideo[ext=mp4]/best'
+        case _:
+            format = 'bestaudio[ext=m4a]+bestvideo[res={}][ext=mp4]/best'.format(str(flow_object.quality)) 
+
+
+
+    try:
+        ydl_args = [
+                    '-P', flow_object.outlet.path,
+                    '-P', 'temp:tmp',
+                    '--ignore-errors',                      # Ignore errors caused by unavailable videos
+                    '-o', flow_object.outlet.video,
+                    '--quiet',                              # Suppress standard output messages
+                    '--format', format,                     # Format code or id
+                    '--write-thumbnail',                    # Write thumbnail image to disk
+                    '-o', 'thumbnail:' + flow_object.outlet.thumbnail,
+                    '--write-info-json',                     # Write video metadata to a .json file
+                    '-o', 'infojson:' + flow_object.outlet.info,
+                    '--download-archive', f"{flow_object.outlet.path}downloaded_{flow_object.flow_id}.txt",  # File name where the download history is recorded
+                    '--embed-subs',                         # Embed subtitles in the output file
+                    '--merge-output-format', 'mp4',           # Merge videos in the mp4 format
+                    '--embed-metadata',                    # Embed the thumbnail, subtitles, chapters, and other metadata when possible
+                    '--write-thumbnail',                    # Write thumbnail image to disk
+                    '--write-info-json',                      # Write video metadata to a .json file
+                    '--sponsorblock-mark', 'all',               # Sponsorblock marker for ads to be cut
+        ]
+        
+        
+
+
+        command = ['yt-dlp'] + ydl_args + [flow_object.url]
+
+        try:
+            subprocess.run(command, check=True)
+        except subprocess.CalledProcessError as error:
+            print(f'Download failed with error: error')
+
+
+   
+
+            
+        for root, dirs, files in os.walk(flow_object.outlet.path):
+            for file in files:
+                # Check if file is a webp image
+                if file.endswith('.webp'):
+                    # Convert to jpeg
+                    filename = os.path.join(root, file)
+                    tmp = Image.open(filename).convert("RGB")
+                    tmp.save(filename.replace(".webp", ".jpeg"), "jpeg")
+                    os.remove(filename) #Removing old thumbnails
+        
+        
+    except Exception as e:
+        print(e)
+
+
+
+
+
+
+
+
 
 
 # Create your views here.
 
+class Initialize(APIView):
+    
+    def post(self, request, format=None, *args, **kwargs):
+        
+        initialize()
+        
+        return Response("Initialization function called", status=status.HTTP_200_OK)
 
 class Ping(APIView):
     
@@ -82,6 +212,22 @@ class BasicDownload(APIView):  # https://youtu.be/C0DPdy98e4c
             ydl.download([payload['url']])
             
         return Response("Downloading", status=status.HTTP_200_OK)
+    
+class FlowDownload(APIView):  # https://youtu.be/C0DPdy98e4c
+
+    def post(self, request, format=None, *args, **kwargs):
+        
+        try:
+            payload = json.loads(request.body)
+            flow_id = payload['flow_id']
+            
+            download_thread = threading.Thread(target=yt_dl_flow, args=(flow_id,))
+            download_thread.start()
+
+            return HttpResponse('Downloading', status=200)
+
+        except KeyError as e:
+            return HttpResponse('Invalid request data', status=400)
 
 
 class Outlet(APIView):
@@ -125,11 +271,11 @@ class Outlet(APIView):
             name = payload['name']
             path = payload['path']
             video = payload['video']
+            thumbnail = payload['thumbnail']
             info = payload['info']
-            temp = payload['temp']
             
             # Create the Flow in the databse
-            new_outlet = OutletModel(name=name, path=path, video=video, info=info, temp=temp)
+            new_outlet = OutletModel(name=name, path=path, video=video, thumbnail=thumbnail, info=info)
             new_outlet.save()
 
             return HttpResponse(status=201)
@@ -190,7 +336,9 @@ class Timer(APIView):
             flow_id = payload['flow_id']
             interval = int(payload['interval'])
             
-            timer_id = create_timer(interval, flow_id)
+            timer_id = str(uuid.uuid4())
+            
+            create_timer(interval, flow_id, timer_id)
             
             new_timer = TimerModel(timer_id=timer_id, interval=interval, last_run=timezone.now())
             new_timer.save()
@@ -246,7 +394,7 @@ class Flow(APIView):
             response = async_to_sync(async_client.post)('http://127.0.0.1:8000/api/timer', json={'interval': interval, 'flow_id': flow_id})
 
 
-            if response.status_code != httpx.codes.OK or response.text == '':
+            if response.status_code != 201:
                 return HttpResponse('Failed to create timer', status=500)
 
             # Get objects from database
@@ -256,6 +404,8 @@ class Flow(APIView):
             # Create the Flow in the databse
             new_flow = FlowModel(flow_id=flow_id, name=name, url=url, type=my_type, quality=quality, outlet=outlet_object, timer=timer_object)
             new_flow.save()
+            
+            requests.post('http://127.0.0.1:8000/api/flow_download', json={'flow_id': flow_id})
                         
             return JsonResponse(data={'flow_id': flow_id}, status=201)
 

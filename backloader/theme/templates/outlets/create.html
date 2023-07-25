@@ -21,15 +21,40 @@ outlets
       <label for="{{ form.video.id_for_label }}">{{ form.video.label }}</label>
       {% render_field form.video class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
     </div>
+      <div class="form-group">
+      <label for="{{ form.thumbnail.id_for_label }}">{{ form.thumbnail.label }}</label>
+      {% render_field form.thumbnail class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
+    </div>
     <div class="form-group">
       <label for="{{ form.info.id_for_label }}">{{ form.info.label }}</label>
       {% render_field form.info class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
     </div>
-    <div class="form-group">
-      <label for="{{ form.temp.id_for_label }}">{{ form.temp.label }}</label>
-      {% render_field form.temp class+="bg-[#1a1a1a] text-white border-white border-1 rounded-xl" %}
-    </div>
+
+
+    <button id="fill-template-btn" type="button" class="btn btn-secondary">Fill with Template</button>
+    <button id="clear-fields-btn" type="button" class="btn btn-danger">Clear Fields</button>
+
     <button type="submit" class="btn btn-primary">Submit</button>
   </form>
+
+
+  <script>
+    // Assign default values to form fields on button press
+    document.getElementById("fill-template-btn").addEventListener("click", function() {
+      document.getElementById("id_path").value = "test/";
+      document.getElementById("id_video").value = "%(title)s [%(id)s]/%(title)s [%(id)s].%(ext)s";
+      document.getElementById("id_thumbnail").value = "%(title)s [%(id)s]/poster.%(ext)s";
+      document.getElementById("id_info").value = "%(title)s [%(id)s]/%(title)s [%(id)s].%(ext)s";
+    });
+
+    // Clear form fields on button press
+    document.getElementById("clear-fields-btn").addEventListener("click", function() {
+      document.getElementById("id_path").value = "";
+      document.getElementById("id_video").value = "";
+      document.getElementById("id_thumbnail").value = "";
+      document.getElementById("id_info").value = "";
+    });
+  </script>
+
 
 {% endblock content %}

@@ -119,8 +119,8 @@ class CreateOutletForm(forms.Form):
     name = forms.CharField(max_length=255)
     path = forms.CharField(max_length=255)
     video = forms.CharField(max_length=255)
+    thumbnail = forms.CharField(max_length=255)
     info = forms.CharField(max_length=255)
-    temp = forms.CharField(max_length=255)
     
     def is_valid(self):
         
@@ -133,8 +133,8 @@ class CreateOutletForm(forms.Form):
         name = self.data['name']
         path = self.data['path']
         video = self.data['video']
+        thumbnail = self.data['thumbnail']
         info = self.data['info']
-        temp = self.data['temp']
         
         
 
@@ -144,8 +144,8 @@ class CreateOutletForm(forms.Form):
             'name': name,
             'path': path,
             'video': video,
+            'thumbnail': thumbnail,
             'info': info,
-            'temp': temp,
         }
         
 
