@@ -2,26 +2,26 @@ import httpx
 import json
 import requests
 from django.shortcuts import render, redirect
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from django import forms
 from django.urls import reverse
 
-
-async def dashboardView(request, **kwargs):
+@csrf_exempt
+def dashboardView(request, **kwargs):
 
     response = requests.get('http://127.0.0.1:8000/api/ping')
     response = response.text
 
     return render(request, 'home.html', {'response': response})
 
-
-async def flowsView(request, **kwargs):
-
-    async with httpx.AsyncClient() as client:
-        response = await client.get('http://127.0.0.1:8000/api/flow')
-        if response.status_code != httpx.codes.OK or response.text == '':
-            processed = {}
-        else:
-            processed = response.json()
+@csrf_exempt
+def flowsView(request, **kwargs):
+    response = requests.get('http://127.0.0.1:8000/api/flow')
+    if response.status_code != 200 or response.text == '':
+        processed = {}
+    else:
+        processed = response.json()
 
     return render(request, 'flows/flows.html', {'flows': processed})
 
@@ -49,6 +49,7 @@ class CreateFlowForm(forms.Form):
     outlet = forms.ChoiceField(choices=[])
     interval = forms.IntegerField()
 
+    @csrf_exempt
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -66,7 +67,7 @@ class CreateFlowForm(forms.Form):
     def is_valid(self):
         return True
         
-
+    @csrf_exempt
     def submit(self):
         api_url = 'http://127.0.0.1:8000/api/flow'
         
@@ -91,7 +92,7 @@ class CreateFlowForm(forms.Form):
         response = requests.post(api_url, json=data)
         response.raise_for_status()
 
-
+@csrf_exempt
 def createFlowView(request, **kwargs):
 
     form = CreateFlowForm(request.POST)
@@ -102,15 +103,14 @@ def createFlowView(request, **kwargs):
 
     return render(request, 'flows/create.html', {'form': form})
 
-
-async def outletsView(request, **kwargs):
+@csrf_exempt
+def outletsView(request, **kwargs):
     
-    async with httpx.AsyncClient() as client:
-        response = await client.get('http://127.0.0.1:8000/api/outlet')
-        if response.status_code != httpx.codes.OK or response.text == '':
-            processed = {}
-        else:
-            processed = response.json()
+    response = requests.get('http://127.0.0.1:8000/api/outlet')
+    if response.status_code != 200 or response.text == '':
+        processed = {}
+    else:
+        processed = response.json()
 
     return render(request, 'outlets/outlets.html', {'outlets': processed})
 
@@ -126,6 +126,7 @@ class CreateOutletForm(forms.Form):
         
         return True
     
+    @csrf_exempt
     def submit(self):
         api_url = 'http://127.0.0.1:8000/api/outlet'
 
@@ -152,7 +153,7 @@ class CreateOutletForm(forms.Form):
         response = requests.post(api_url, json=data)
         response.raise_for_status()
     
-    
+@csrf_exempt    
 def createOutletView(request):
     
     form = CreateOutletForm(request.POST)
@@ -166,8 +167,8 @@ def createOutletView(request):
         form = CreateOutletForm()
     return render(request, 'outlets/create.html', {'form': form})
 
-
-async def settingsView(request, **kwargs):
+@csrf_exempt
+def settingsView(request, **kwargs):
 
     response = requests.get('http://127.0.0.1:8000/api/ping')
     response_text = response.text

@@ -1,14 +1,28 @@
 FROM ubuntu:latest
 
+RUN apt update && \
+    apt install -y python3 python3-pip sqlite3 ffmpeg nginx openssl
 
-RUN apt update
-RUN apt install python3 -y
-RUN apt install python3-pip -y
-RUN apt install ffmpeg -y
-RUN python3 -m pip install yt-dlp pillow
+# Install Python dependencies
+RUN python3 -m pip install django django-rest-framework django-tailwind django-widget-tweaks daphne yt-dlp pillow requests httpx tzdata
 
 WORKDIR /app
+
 COPY . /app
 
+# Configure Nginx
+COPY nginx.conf /etc/nginx/sites-available/default
 
-CMD ["python3", "backloader.py"]
+
+WORKDIR /app/backloader
+
+# Ensure database
+RUN python3 manage.py migrate
+
+# Build the static files
+RUN python3 manage.py collectstatic --noinput
+
+# Expose ports
+EXPOSE 80
+
+CMD sh -c "nginx && daphne backloader.asgi:application --port 8000 --bind 0.0.0.0"

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.core import serializers
 from asgiref.sync import async_to_sync
 from yt_dlp import YoutubeDL
@@ -190,7 +191,7 @@ class Initialize(APIView):
     
     def post(self, request, format=None, *args, **kwargs):
         
-        initialize()
+        #initialize()
         
         return Response("Initialization function called", status=status.HTTP_200_OK)
 
@@ -374,6 +375,7 @@ class Timer(APIView):
 
 class Flow(APIView):
     
+    @csrf_exempt
     def post(self, request, format=None, *args, **kwargs):
 
         
@@ -412,7 +414,7 @@ class Flow(APIView):
         except KeyError as e:
             return HttpResponse('Invalid request data or database faliure', status=400)
 
-        
+    @csrf_exempt
     def delete(self, request, format=None, *args, **kwargs):
 
         try:
