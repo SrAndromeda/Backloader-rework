@@ -117,13 +117,15 @@ def yt_dl_flow(flow_id):
 
     format = ''
     
+    print(str(flow_object.quality))
+    
     match flow_object.quality:
         case 'a':
             format = 'bestaudio[ext=m4a]'
         case 'max':
-            format = 'bestaudio[ext=m4a]+bestvideo[ext=mp4]/best'
+            format = 'bestaudio[ext=m4a]+bestvideo/best'
         case _:
-            format = 'bestaudio[ext=m4a]+bestvideo[res={}][ext=mp4]/best'.format(str(flow_object.quality)) 
+            format = 'bestaudio[ext=m4a]+bestvideo[height={}]/bestaudio[ext=m4a]+bestvideo[width={}]/bestaudio[ext=m4a]+bestvideo/best'.format(str(flow_object.quality), str(flow_object.quality)) 
 
 
 

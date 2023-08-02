@@ -21,5 +21,12 @@ The interface will be available on `localhost:8087`. It is very basic, but *just
 I recommend using [this Jellyfin plugin](https://github.com/ankenyr/jellyfin-youtube-metadata-plugin) for downloading video and channel metadata alongside backloader. Follow the guide provided by its author, the Jellyfin template will work with it.
 
 
+## vp9 and av01 support on Apple devices
 
+### macOS
 
+In Safari preferences, enable the Developer tab in the top bar, then go to Developer → Experimental functions and enable av01 and vp9 codecs as needed.
+
+### iOS and iPadOS
+
+I haven't been able to enable these codecs in Safari. To avoid live transcoding, play vp9 and av01 content using Swiftfin or Infuse (Available on the App Store).
