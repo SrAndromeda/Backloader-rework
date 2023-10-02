@@ -193,7 +193,7 @@ class Initialize(APIView):
     
     def post(self, request, format=None, *args, **kwargs):
         
-        #initialize()
+        initialize()
         
         return Response("Initialization function called", status=status.HTTP_200_OK)
 

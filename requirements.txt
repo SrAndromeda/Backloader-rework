@@ -1,0 +1,10 @@
+django 
+django-rest-framework 
+django-tailwind 
+django-widget-tweaks 
+daphne 
+yt-dlp 
+pillow 
+requests 
+httpx 
+tzdata
