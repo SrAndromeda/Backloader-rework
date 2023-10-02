@@ -1,3 +1,4 @@
 .devcontainer
 dev-env
 test
+__pycache__
