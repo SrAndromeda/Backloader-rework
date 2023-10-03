@@ -26,7 +26,6 @@ const fetchData = async(setContent) => {
   axios.get(BASE_BACKEND + BASE_OUTLET)
     .then((response) => {
       setContent(response.data)
-      console.log(response.data)
     })
     .catch((error) => {
       console.error(error)
@@ -73,7 +72,7 @@ const AppOutletList = () => {
       </Box>
 
       <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-end'}}>
-        <StyledButton variant="contained" color="success">
+        <StyledButton variant="contained" color="success" onClick={()=>{navigation('/outlets/create')}}>
           <Icon sx={{ mr: 2 }}>add</Icon>
           <Span>New</Span>
         </StyledButton>
