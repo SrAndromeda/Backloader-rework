@@ -6,16 +6,11 @@ name: Docker
 # documentation.
 
 on:
-  release:
-    types: [published]
-  # schedule:
-  #   - cron: '28 20 * * *'
   push:
     branches: [ "master" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
-  # pull_request:
-  #   branches: [ "master" ]
+  workflow_dispatch:
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -72,9 +67,10 @@ jobs:
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        uses:   # v5.0.0
         with:
           context: .
+          dockerfile: ./.github/workflows/Dockerfile 
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
