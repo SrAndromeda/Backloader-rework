@@ -2,7 +2,7 @@ import { Box, Button, Fab, Icon, IconButton, styled } from "@mui/material";
 import { Breadcrumb, SimpleCard } from "app/components";
 import ObjectsTable from "app/components/ObjectsTable";
 import { Span } from "app/components/Typography";
-import { BASE_BACKEND, BASE_OUTLET } from "app/utils/constant";
+import { BASE_BACKEND_PROTOCOL, BASE_OUTLET } from "app/utils/constant";
 import ResponsiveDialog from "app/components/ResponsiveDialog";
 import SimpleDialog from "app/components/SimpleDialog";
 import axios from "axios";
@@ -24,7 +24,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
 }));
 
 function deleteOutlet(id, setTitle, setContent, setOpen){
-  axios.delete(BASE_BACKEND + BASE_OUTLET, {data:{
+  axios.delete(BASE_BACKEND_PROTOCOL + window.location.hostname + ':' + window.location.port + BASE_OUTLET, {data:{
     outlet_id: id
   }})
     .then((response) => {

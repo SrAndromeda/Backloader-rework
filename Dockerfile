@@ -1,7 +1,7 @@
-FROM ubuntu:latest
+FROM nginx:alpine-slim
 
-RUN apt update && \
-    apt install -y python3 python3-pip sqlite3 ffmpeg nginx openssl
+RUN apk update && \
+    apk add python3 py3-pip sqlite ffmpeg openssl
 
 # Install Python dependencies
 RUN python3 -m pip install django django-rest-framework django-tailwind django-widget-tweaks daphne yt-dlp pillow requests httpx tzdata django-cors-headers
@@ -11,8 +11,8 @@ WORKDIR /app
 COPY . /app
 
 # Configure Nginx
-COPY backloader/frontend/build /backloader-front
-COPY nginx.conf /etc/nginx/sites-available/default
+COPY backloader/frontend/build /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 WORKDIR /app/backloader
 

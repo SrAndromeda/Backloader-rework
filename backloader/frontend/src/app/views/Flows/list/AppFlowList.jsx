@@ -3,7 +3,7 @@ import { Breadcrumb, SimpleCard } from "app/components";
 import ObjectsTable from "app/components/ObjectsTable";
 import { Span } from "app/components/Typography";
 import axios from "axios";
-import { BASE_BACKEND, BASE_FLOW, BASE_OUTLET } from "app/utils/constant";
+import { BASE_BACKEND_PROTOCOL, BASE_FLOW, BASE_OUTLET } from "app/utils/constant";
 import ResponsiveDialog from "app/components/ResponsiveDialog";
 import SimpleDialog from "app/components/SimpleDialog";
 import { useEffect, useState } from "react";
@@ -25,7 +25,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
 }));
 
 function deleteFlow(id, setTitle, setContent, setOpen){
-  axios.delete(BASE_BACKEND + BASE_FLOW, {data:{
+  axios.delete(BASE_BACKEND_PROTOCOL + window.location.hostname + ':' + window.location.port + BASE_FLOW, {data:{
     id: id
   }})
     .then((response) => {

@@ -1,8 +1,8 @@
 import axios from "axios";
-import { BASE_BACKEND, BASE_FLOW, BASE_OUTLET } from "app/utils/constant";
+import { BASE_BACKEND_PROTOCOL, BASE_FLOW, BASE_OUTLET } from "app/utils/constant";
 
 export const fetchFlow = async (setContent) => {
-    axios.get(BASE_BACKEND + BASE_FLOW)
+    axios.get(BASE_BACKEND_PROTOCOL + window.location.hostname + ':' + window.location.port + BASE_FLOW)
         .then((response) => {
             setContent(response.data)
             // console.log(response.data)
@@ -13,7 +13,7 @@ export const fetchFlow = async (setContent) => {
 };
 
 export const fetchOutlet = async (setContent) => {
-    axios.get(BASE_BACKEND + BASE_OUTLET)
+    axios.get(BASE_BACKEND_PROTOCOL + window.location.hostname + ':' + window.location.port + BASE_OUTLET)
         .then((response) => {
             setContent(response.data)
             // console.log(response.data)

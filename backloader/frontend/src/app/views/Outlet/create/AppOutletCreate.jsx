@@ -3,7 +3,7 @@ import { Box, styled } from "@mui/system";
 import { Breadcrumb, SimpleCard } from "app/components";
 import SimpleForm from "./SimpleForm";
 import axios from "axios";
-import { BASE_BACKEND, BASE_OUTLET } from "app/utils/constant";
+import { BASE_BACKEND_PROTOCOL, BASE_OUTLET } from "app/utils/constant";
 import { useNavigate } from "react-router-dom";
 
 const Container = styled("div")(({ theme }) => ({
@@ -20,7 +20,7 @@ const AppOutletCreate = () => {
     const navigate = useNavigate()
 
     const handleSubmit = (event, state) => {
-        axios.post(BASE_BACKEND+BASE_OUTLET,state)
+        axios.post(BASE_BACKEND_PROTOCOL + window.location.hostname + ':' + window.location.port + BASE_OUTLET,state)
             .then((response) => {navigate('/outlets')})
     }
 

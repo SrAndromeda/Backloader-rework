@@ -4,7 +4,7 @@ import { MatxMenu } from 'app/components';
 import { themeShadows } from 'app/components/MatxTheme/themeColors';
 import useAuth from 'app/hooks/useAuth';
 import useSettings from 'app/hooks/useSettings';
-import { BASE_BACKEND, BASE_INIT, topBarHeight } from 'app/utils/constant';
+import { BASE_BACKEND_PROTOCOL, BASE_INIT, topBarHeight } from 'app/utils/constant';
 import React from 'react';
 import { Span } from '../../../components/Typography';
 import axios from 'axios';
@@ -92,7 +92,7 @@ const Layout1Topbar = () => {
   };
 
   const initialize = () => {
-    axios.post(BASE_BACKEND + BASE_INIT)
+    axios.post(BASE_BACKEND_PROTOCOL + window.location.hostname + ':' + window.location.port + BASE_INIT)
   };
 
   return (
