@@ -262,7 +262,7 @@ class Outlet(APIView):
                 outlet_jsons = json.dumps(outlet_objects)
                 
             else:
-                outlet_jsons = {}
+                outlet_jsons = json.dumps([])
                 
 
             return HttpResponse(content= outlet_jsons, status=200)
@@ -295,6 +295,7 @@ class Outlet(APIView):
             # Find requested object
             outlet_object = get_object_or_404(OutletModel, id=outlet_id)
             outlet_object.delete()
+            return HttpResponse(status=204)
 
         except KeyError as e:
             return HttpResponse('Invalid request data', status=400)
@@ -467,7 +468,7 @@ class Flow(APIView):
                 flow_jsons = json.dumps(flow_objects)
                 
             else:
-                flow_jsons = {}
+                flow_jsons = json.dumps([])
 
             return HttpResponse(content=flow_jsons, status=200)
 

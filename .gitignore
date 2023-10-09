@@ -2,3 +2,4 @@
 dev-env
 test
 __pycache__
+*/__pycache__
