@@ -2,5 +2,7 @@
 dev-env
 test
 __pycache__
-*/__pycache__
+backloader/backloader/__pycache__
+backloader/backend/__pycache__
+backloader/theme/__pycache__
 backloader/db.sqlite3
