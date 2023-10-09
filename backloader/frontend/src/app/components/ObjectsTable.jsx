@@ -10,6 +10,7 @@ import {
     TablePagination,
     TableRow,
 } from "@mui/material";
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useState } from "react";
 
 const StyledTable = styled(Table)(() => ({
@@ -22,7 +23,7 @@ const StyledTable = styled(Table)(() => ({
     },
 }));
 
-const ObjectsTable = ({ headers, keyContent, content, pagination=false, editButton=false, editAction=()=>{}, deleteButton=false, deleteAction=() => {} }) => {
+const ObjectsTable = ({ headers, keyContent, content, pagination=false, paginationButtons=false, viewButton=false, viewAction=()=>{}, editButton=false, editAction=()=>{}, deleteButton=false, deleteAction=() => {} }) => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const handleChangePage = (_, newPage) => {
@@ -57,6 +58,20 @@ const ObjectsTable = ({ headers, keyContent, content, pagination=false, editButt
                                             <TableCell key={String(index)+"-"+String(index2)} align="center">{subscriber[key]}</TableCell>
                                         ))
                                     }
+                                    {viewButton || editButton || deleteButton
+                                        ? (<TableCell align="center">
+                                            {viewButton
+                                                && (<IconButton onClick={() => {viewAction(index)}}> <VisibilityIcon color="action" /> </IconButton>)
+                                            }
+                                            {editButton
+                                                && (<IconButton onClick={() => {editAction(index)}}> <Icon color="secondary">edit</Icon> </IconButton>)
+                                            }
+                                            {deleteButton
+                                                && (<IconButton onClick={() => {deleteAction(index)}}> <Icon color="error">delete</Icon> </IconButton>)
+                                            }
+                                        </TableCell>)
+                                        : null
+                                    }
                                 </TableRow>
                             )))
                         : (content
@@ -67,8 +82,11 @@ const ObjectsTable = ({ headers, keyContent, content, pagination=false, editButt
                                             <TableCell key={String(index)+"-"+String(index2)} align="center">{subscriber[key]}</TableCell>
                                         ))
                                     }
-                                    {editButton || deleteButton
+                                    {viewButton || editButton || deleteButton
                                         ? (<TableCell align="center">
+                                            {viewButton
+                                                && (<IconButton onClick={() => {viewAction(index)}}> <VisibilityIcon color="action" /> </IconButton>)
+                                            }
                                             {editButton
                                                 && (<IconButton onClick={() => {editAction(index)}}> <Icon color="secondary">edit</Icon> </IconButton>)
                                             }
@@ -83,13 +101,13 @@ const ObjectsTable = ({ headers, keyContent, content, pagination=false, editButt
                     }
                 </TableBody>
             </StyledTable>
-            {pagination
+            {pagination && paginationButtons
                 ? (<TablePagination
                     sx={{ px: 2 }}
                     page={page}
                     component="div"
                     rowsPerPage={rowsPerPage}
-                    count={tableContent.length}
+                    count={content.length}
                     onPageChange={handleChangePage}
                     rowsPerPageOptions={[5, 10, 25]}
                     onRowsPerPageChange={handleChangeRowsPerPage}

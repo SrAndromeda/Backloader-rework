@@ -38,8 +38,8 @@
     "yup": "^0.32.11"
   },
   "scripts": {
-    "start": "DISABLE_ESLINT_PLUGIN=true react-scripts --openssl-legacy-provider start",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "start": "CHOKIDAR_USEPOLLING=true DISABLE_ESLINT_PLUGIN=true react-scripts --openssl-legacy-provider start",
+    "build": "GENERATE_SOURCEMAP=false react-scripts --openssl-legacy-provider build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "ghp": "react-scripts build && gh-pages -d build"

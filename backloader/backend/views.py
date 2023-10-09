@@ -468,7 +468,7 @@ class Flow(APIView):
                 flow_jsons = json.dumps(flow_objects)
                 
             else:
-                flow_jsons = {}
+                flow_jsons = json.dumps([])
 
             return HttpResponse(content=flow_jsons, status=200)
 
