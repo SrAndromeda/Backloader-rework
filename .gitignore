@@ -3,3 +3,4 @@ dev-env
 test
 __pycache__
 */__pycache__
+backloader/db.sqlite3
