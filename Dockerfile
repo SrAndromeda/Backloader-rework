@@ -4,15 +4,15 @@ RUN apt update && \
     apt install -y python3 python3-pip sqlite3 ffmpeg nginx openssl
 
 # Install Python dependencies
-RUN python3 -m pip install django django-rest-framework django-tailwind django-widget-tweaks daphne yt-dlp pillow requests httpx tzdata
+RUN python3 -m pip install django django-rest-framework django-tailwind django-widget-tweaks daphne yt-dlp pillow requests httpx tzdata django-cors-headers
 
 WORKDIR /app
 
 COPY . /app
 
 # Configure Nginx
+COPY backloader/frontend/build /backloader-front
 COPY nginx.conf /etc/nginx/sites-available/default
-
 
 WORKDIR /app/backloader
 
