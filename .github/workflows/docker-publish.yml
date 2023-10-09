@@ -10,10 +10,10 @@ on:
     types: [published]
   # schedule:
   #   - cron: '28 20 * * *'
-  # push:
-  #   branches: [ "master" ]
-  #   # Publish semver tags as releases.
-  #   tags: [ 'v*.*.*' ]
+  push:
+    branches: [ "master" ]
+    # Publish semver tags as releases.
+    tags: [ 'v*.*.*' ]
   # pull_request:
   #   branches: [ "master" ]
 
